@@ -1,0 +1,13 @@
+reports
+logs
+vendor
+composer.lock
+nbproject
+exchange
+.svn
+/.idea/*
+!/.idea/codeStyleSettings.xml
+!/.idea/inspectionProfiles/profiles_settings.xml
+!/.idea/inspectionProfiles/seopult.xml
+/configs/*/\.*
+!.gitkeep
