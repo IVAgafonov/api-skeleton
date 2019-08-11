@@ -35,7 +35,7 @@ class DataProvider implements DataProviderInterface
      */
     public function __construct(array $config)
     {
-        if (empty($config['user']) || empty($config['password']) || empty($config['host']) || !isset($config['db'])) {
+        if (empty($config['user']) || empty($config['host']) || !isset($config['db'])) {
             throw new \Exception("Invalid mysql database params");
         }
         $this->pdo = new \PDO("mysql:dbname=" . $config['db'] . ";host=" . $config['host'] . ";charset=utf8", $config['user'], $config['password']);
