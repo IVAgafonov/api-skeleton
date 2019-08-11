@@ -1,8 +1,11 @@
 language: php
 php:
   - 7.2
-before_script:
+services:
+  - mysql
+before_install:
   - mysql -u root -e 'CREATE DATABASE IF NOT EXISTS app_main;'
+before_script:
   - composer install --no-interaction
   - composer docs
   - composer migrate
