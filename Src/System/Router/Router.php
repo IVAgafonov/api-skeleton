@@ -49,7 +49,6 @@ class Router
         set_error_handler(function (int $code, string $message, string $file, int $line, $context = null) {
             $msg = $message." in file: ".$file." on line: ".$line.". Code: ".$code;
             error_log($msg);
-            echo $msg;
             die();
         });
         set_exception_handler(function (\Throwable $e) {
@@ -66,7 +65,6 @@ class Router
                 }
             }
             error_log($msg);
-            echo $msg;
             die();
         });
         register_shutdown_function(function () {
