@@ -23,6 +23,7 @@
         "flow/jsonpath": "^0.4.0"
     },
     "scripts": {
+        "migrate": "./vendor/bin/phinx migrate -e production",
         "docs": "./vendor/bin/openapi -o ./docs ./Src/Api/",
         "test": "./vendor/bin/codecept run"
     }
