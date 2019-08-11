@@ -2,7 +2,7 @@
 
 namespace App\Api\Controller;
 
-use App\Api\Response\AbstractResponse;
+use App\Entity\User\User;
 
 /**
  * Class AbstractController
@@ -10,36 +10,55 @@ use App\Api\Response\AbstractResponse;
  */
 abstract class AbstractApiController {
 
-	/**
-	 * @var string
-	 */
-	protected $service;
+    /**
+     * @OA\OpenApi({
+     *     @OA\Info(
+     *         title="App",
+     *         version="0000.00.00",
+     *         description="Api docs"
+     *     ),
+     *     @OA\Tag(
+     *         name="Auth",
+     *         description="Auth methods"
+     *     ),
+     *     @OA\Tag(
+     *         name="User",
+     *         description="User methods"
+     *     ),
+     * }, security={{"TokenAuth":{}}})
+     *
+     * @OA\Server(
+     *     description="Current server",
+     *     url="/"
+     * )
+     *
+     * @OA\SecurityScheme(
+     *     type="http",
+     *     scheme="bearer",
+     *     securityScheme="TokenAuth"
+     * )
+     */
+
+
+    /**
+     * @var User|null
+     */
+    protected $user = null;
 
 	/**
 	 * @var string
 	 */
-	protected $method;
+	protected $method = 'GET';
+
+    /**
+     * @var array
+     */
+    protected $headers = [];
 
 	/**
 	 * @var array
 	 */
 	protected $params = [];
-
-	/**
-	 * @param string $service
-	 */
-	public function setService($service)
-	{
-		$this->service = $service;
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getService()
-	{
-		return $this->service;
-	}
 
 	/**
 	 * @param string $method
@@ -71,5 +90,37 @@ abstract class AbstractApiController {
 	 */
 	public function getParams() {
 		return $this->params;
+	}
+
+	/**
+	 * Set headers
+	 * @param array $headers
+	 */
+	public function setHeaders(array $headers) {
+		$this->headers = $headers;
+	}
+
+	/**
+	 * Get headers
+	 * @return array
+	 */
+	public function getHeaders() {
+		return $this->headers;
+	}
+
+	/**
+	 * Set User
+	 * @param User $user
+	 */
+	public function setUser(User $user) {
+		$this->user = $user;
+	}
+
+	/**
+	 * Get User
+	 * @return User
+	 */
+	public function getUser() {
+		return $this->user;
 	}
 }

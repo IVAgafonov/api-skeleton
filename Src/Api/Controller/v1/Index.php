@@ -10,32 +10,11 @@ use App\Api\Response\EmptyResponse;
  * @package App\Api\Controller\v1
  */
 class Index extends AbstractApiController {
-    /**
-     * @OA\OpenApi({
-     *     @OA\Info(
-     *         title="App",
-     *         version="0000.00.00",
-     *         description="Api docs"
-     *     )
-     * }, security={{"TokenAuth":{}}}))
-     *
-     * @OA\Server(
-     *     description="Current server",
-     *     url="/"
-     * )
-     *
-     * @OA\SecurityScheme(
-     *     type="http",
-     *     scheme="bearer",
-     *     securityScheme="TokenAuth"
-     * )
-     */
 
     /**
      * @OA\Get(path="/api/v1/index/{index}/index",
-     *     tags={"index"},
-     *     summary="Test methods",
-     *     security={},
+     *     tags={"Index"},
+     *     summary="Test index method",
      *     @OA\Parameter(
      *         name="index",
      *         in="path",
@@ -44,11 +23,23 @@ class Index extends AbstractApiController {
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Html response success (with js code in script tag)"
+     *         description="Response success",
+     *         @OA\JsonContent(
+     *              type="object",
+     *              @OA\Property(property="timestamp", type="integer", example="1563707216"),
+     *              @OA\Property(property="response_type", type="string", example="EmptyResponse"),
+     *              @OA\Property(property="response", ref="#/components/schemas/EmptyResponse")
+     *         )
      *     ),
      *     @OA\Response(
      *         response=500,
      *         description="Server error",
+     *         @OA\JsonContent(
+     *              type="object",
+     *              @OA\Property(property="timestamp", type="integer", example="1563707216"),
+     *              @OA\Property(property="response_type", type="string", example="ServerErrorResponse"),
+     *              @OA\Property(property="response", ref="#/components/schemas/ServerErrorResponse")
+     *         )
      *     )
      * )
      */

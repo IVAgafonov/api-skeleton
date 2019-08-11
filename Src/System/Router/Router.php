@@ -3,10 +3,13 @@
 namespace App\System\Router;
 
 use App\Api\Controller\AbstractApiController;
+use App\Api\Middleware\MiddlewareInterface;
 use App\Api\Response\AbstractResponse;
-use App\Api\Response\ServerErrorResponse;
+use App\Api\Response\Error\ClientErrorResponse;
+use App\Api\Response\Error\ServerErrorResponse;
 use App\Api\Response\ResponseInterface;
 use App\System\Config\Config;
+use App\System\Reporter\Reporter;
 use Symfony\Component\Yaml\Yaml;
 
 /**
@@ -15,28 +18,11 @@ use Symfony\Component\Yaml\Yaml;
  */
 class Router
 {
-    const ROLE_GUEST = 0;
-    const ROLE_USER = 1;
 
     /**
-     * @var string
+     * @var array
      */
-    protected static $controller = 'index';
-
-    /**
-     * @var string
-     */
-    protected static $action = 'index';
-
-    /**
-     * @var string
-     */
-    protected static $version = 'v1';
-
-    /**
-     * @var int
-     */
-    protected static $role = Router::ROLE_GUEST;
+    protected static $headers = [];
 
     /**
      * @var array
@@ -58,23 +44,17 @@ class Router
      */
     protected static $response;
 
-    /**
-     * @var ResponseInterface
-     */
-    protected static $response_code = 200;
-
     public static function init()
     {
-        self::response(new ServerErrorResponse("Server made a boo boo"));
         set_error_handler(function (int $code, string $message, string $file, int $line, $context = null) {
             $msg = $message." in file: ".$file." on line: ".$line.". Code: ".$code;
-            self::$response_code = 500;
             error_log($msg);
+            echo $msg;
             die();
         });
         set_exception_handler(function (\Throwable $e) {
             if ($e->getCode() > 300 && $e->getCode() < 600) {
-                self::$response_code = $e->getCode();
+                http_response_code($e->getCode());
             }
             $msg = "Thrown exception [".get_class($e)."] with message: ".$e->getMessage()." in file: ".$e->getFile()." on line :".$e->getLine();
             $trace = $e->getTrace();
@@ -86,16 +66,17 @@ class Router
                 }
             }
             error_log($msg);
+            echo $msg;
             die();
         });
         register_shutdown_function(function () {
-            http_response_code(self::$response_code);
             echo json_encode([
                 'timestamp' => (new \DateTime())->getTimestamp(),
                 'response_type' => self::$response::getResponseType(),
-                'data' => self::$response
+                'response' => self::$response
             ]);
         });
+        self::response(new ServerErrorResponse(["message" => "Server made a boo boo"]));
 
         \App\System\Config\Config::init();
         session_start();
@@ -107,27 +88,18 @@ class Router
             throw new \Exception("Invalid request method", 400);
         }
 
+        self::$headers = [];
+
         if (function_exists('getallheaders')) {
-            $headers = \getallheaders();
-        } else {
-            //todo tmpc
-            $headers = ['Authorization' => 'test'];
+            self::$headers = \getallheaders();
         }
 
-        $token = '';
-        if (!empty($headers['Authorization']) || !empty($headers['authorization'])) {
-            $token = !empty($headers['Authorization']) ? $headers['Authorization'] : $headers['authorization'];
-            $token = trim($token, "bearer");
-            $token = trim($token, "Bearer");
-            $token = trim($token);
-        }
-
-        $auth = Config::get('auth.tokens');
-        if (!empty($auth[$token])) {
-            self::$service = $auth[$token];
-            self::$role = Router::ROLE_USER;
-        } else {
-            self::$role = Router::ROLE_GUEST;
+        if (empty($headers)) {
+            foreach ($_SERVER as $name => $value) {
+                if (substr($name, 0, 5) == 'HTTP_') {
+                    self::$headers[str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))))] = $value;
+                }
+            }
         }
 
         self::dispatch();
@@ -210,7 +182,7 @@ class Router
             $routeMask = preg_replace("/{\w+}/", "[^/]+", $route);
 
             $pathItems = explode("/", $path);
-            if (preg_match("#^".$routeMask."$#i", $route)) {
+            if (preg_match("#^".$routeMask."$#i", $path)) {
                 foreach (explode("/", $route) as $index => $item) {
                     if (preg_match("/^{\w+}$/i", $item)) {
                         self::$params[trim($item, "{}")] = urldecode($pathItems[$index] ?? null);
@@ -224,9 +196,32 @@ class Router
                             throw new \Exception("Invalid operation", 500);
                         }
                         if (class_exists($controller[0])) {
+                            $allowed_groups = $info['security'][0]['TokenAuth'] ?? [];
                             $class = new $controller[0]();
                             $m = $controller[1];
                             if (method_exists($class, $controller[1])) {
+                                //middleware
+                                $middlewares = Config::get('app.middleware');
+
+                                if (is_array($middlewares) && !empty($middlewares))
+                                foreach ($middlewares as $middleware) {
+                                   $mw = new $middleware();
+                                   if ($mw instanceof MiddlewareInterface) {
+                                       $response = $mw($class, self::$headers, self::$params, [
+                                           'allowed_groups' => $allowed_groups
+                                       ]);
+                                       if ($response instanceof ResponseInterface) {
+                                           return $response;
+                                       }
+                                   } else {
+                                       throw new \Exception("Invalid middleware: ".$middleware);
+                                   }
+                                }
+
+                                //controller
+                                $class->setHeaders(self::$headers);
+                                $class->setParams(self::$params);
+                                $class->setMethod(self::$method);
                                 return $class->$m();
                             }
                         }
@@ -234,6 +229,6 @@ class Router
                 }
             }
         }
-        return null;
+        return new ClientErrorResponse(["message" => "Invalid route"], 404);
     }
 }
