@@ -2,5 +2,5 @@ actor: ApiTester
 modules:
     enabled:
         - REST:
-              url: http://127.0.0.1:88
+              url: http://127.0.0.1:8080
               depends: PhpBrowser

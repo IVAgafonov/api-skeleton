@@ -3,7 +3,7 @@ php:
   - 7.2
 before_script:
   - composer install --no-interaction
-  - php -S 127.0.0.1:80 -t /home/travis/build/IVAgafonov/api-skeleton > /dev/null 2>&1 &
+  - php -S 127.0.0.1:8080 -t /home/travis/build/IVAgafonov/api-skeleton > /dev/null 2>&1 &
   - composer docs
 script:
   - composer test
