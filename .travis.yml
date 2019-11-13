@@ -16,4 +16,4 @@ script:
 after_script:
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
   - docker build -t igoradm90/api-skeleton:latest .
-  - docker push
+  - docker push igoradm90/api-skeleton:latest
