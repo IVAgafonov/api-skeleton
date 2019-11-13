@@ -15,5 +15,5 @@ script:
   - composer test
 after_script:
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-  - docker build -t igoradm90/api-skeleton:latest .
-  - docker push igoradm90/api-skeleton:latest
+  - docker build -t igoradm90/skeleton-api:latest .
+  - docker push igoradm90/skeleton-api:latest
