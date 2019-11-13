@@ -4,6 +4,7 @@ namespace App\Api\Controller\v1;
 
 use App\Api\Controller\AbstractApiController;
 use App\Api\Response\EmptyResponse;
+use App\Api\Response\Error\ServerErrorResponse;
 
 /**
  * Class Index
@@ -46,6 +47,6 @@ class Index extends AbstractApiController {
      */
     public function index()
     {
-        return new EmptyResponse();
+        return new ServerErrorResponse(["message" => "test deploy"]);
     }
 }
