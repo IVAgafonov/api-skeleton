@@ -55,19 +55,28 @@ class Router
             if ($e->getCode() > 300 && $e->getCode() < 600) {
                 http_response_code($e->getCode());
             }
-            $msg = "Thrown exception [".get_class($e)."] with message: ".$e->getMessage()." in file: ".$e->getFile()." on line :".$e->getLine();
+            $msg = "Thrown exception [".get_class($e)."] with message: ".$e->getMessage()." in file: ".$e->getFile()." on line: ".$e->getLine();
             $trace = $e->getTrace();
 
             if ($trace && is_array($trace)) {
-                $msg .= "\tTrace:";
+                $msg .= " Trace:";
                 foreach ($trace as $i => $t) {
-                    $msg .= "[".$i." => ".$t['file'].": ".$t['line']."]";
+                    if (!empty($t['file']) && !empty($t['line'])) {
+                        $msg .= "[".$i." => ".$t['file'].": ".$t['line']."]";
+                    }
                 }
             }
             error_log($msg);
             die();
         });
         register_shutdown_function(function () {
+            $error = error_get_last();
+
+            if ($error) {
+                $msg = "[".$error['type']."] with message: ".$error['message']." in file: " . $error['file'] . " on line: " . $error['line'];
+                error_log("[".date("d-M-Y H:i:s")."] ".$msg);
+            }
+
             echo json_encode([
                 'timestamp' => (new \DateTime())->getTimestamp(),
                 'response_type' => self::$response::getResponseType(),

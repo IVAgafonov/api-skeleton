@@ -3,6 +3,7 @@ php:
   - 7.2
 services:
   - mysql
+  - docker
 before_install:
   - mysql -u root -e 'CREATE DATABASE IF NOT EXISTS app_main;'
 before_script:
@@ -12,3 +13,7 @@ before_script:
   - php -S 127.0.0.1:8080 -t /home/travis/build/IVAgafonov/api-skeleton > /dev/null 2>&1 &
 script:
   - composer test
+after_script:
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+  - docker build -t igoradm90/api-skeleton:latest .
+  - docker push

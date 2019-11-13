@@ -15,6 +15,7 @@ class Index extends AbstractApiController {
      * @OA\Get(path="/api/v1/index/{index}/index",
      *     tags={"Index"},
      *     summary="Test index method",
+     *     security={},
      *     @OA\Parameter(
      *         name="index",
      *         in="path",
