@@ -26,11 +26,14 @@ class ClientErrorResponse extends AbstractResponse
 
     /**
      * ServerErrorResponse constructor.
-     * @param array $data
+     * @param string $field
+     * @param string $message
      * @param int $response_code
      */
-    public function __construct(array $data, int $response_code = 400)
+    public function __construct(string $field, string $message, int $response_code = 400)
     {
-        parent::__construct($data, $response_code);
+        $this->field = $field;
+        $this->message = $message;
+        parent::__construct($response_code);
     }
 }

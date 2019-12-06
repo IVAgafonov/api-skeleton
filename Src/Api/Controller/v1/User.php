@@ -6,9 +6,8 @@ use App\Api\Controller\AbstractApiController;
 use App\Api\Response\Auth\ErrorAuthResponse;
 use App\Api\Response\Auth\SuccessAuthResponse;
 use App\Api\Response\Error\ClientErrorResponse;
-use App\Api\Response\EmptyResponse;
-use App\Api\Response\Error\ServerErrorResponse;
 use App\Api\Response\User\UserResponse;
+use App\Entity\Token\TokenType;
 use App\Service\Auth\AuthService;
 use App\Service\Crypt\CryptService;
 use App\Service\User\UserService;
@@ -37,7 +36,7 @@ class User extends AbstractApiController {
      *                 @OA\Property(property="password", type="string", format="password"),
      *                 @OA\Property(property="name", type="string"),
      *             },
-     *             example={"email": "test@site.ru", "password": "654321", "name": "Test User"}
+     *             example={"email": "test@site.com", "password": "12344321", "name": "Test User"}
      *         )
      *     ),
      *     @OA\Response(
@@ -92,35 +91,17 @@ class User extends AbstractApiController {
         }
 
         if ($user_service->getUserByEmail($this->params['email'])) {
-            return new ClientErrorResponse([
-                'field' => 'email',
-                'message' => 'User with this email already exists'
-            ]);
+            return new ClientErrorResponse('email', 'User with this email already exists');
         }
 
-        $user = $user_service->createUser([
-            'email' => $this->params['email'],
-            'name' => $this->params['name'],
-            'password' => CryptService::hashPassword($this->params['password'])
-        ]);
-
-        if (!$user) {
-            return new ClientErrorResponse([
-                'field' => "email",
-                'message' => "Can't create new user. Please, try later"
-            ]);
-        }
+        $user = new \App\Entity\User\User();
+        $user->setEmail($this->params['email']);
+        $user->setName($this->params['name']);
+        $user->setPassword(CryptService::hashPassword($this->params['password']));
+        $user = $user_service->saveUser($user);
 
         $auth_service = new AuthService($dp);
-        $auth = $auth_service->authUser($user->getId());
-
-        if (!$auth) {
-            return new ErrorAuthResponse([
-                'message' => "Unauthorized"
-            ]);
-        }
-
-        return new SuccessAuthResponse($auth);
+        return $auth_service->authUser($user, new TokenType(TokenType::TEMPORARY));
     }
 
     /**
@@ -192,9 +173,9 @@ class User extends AbstractApiController {
 
         $this->getUser()->setName($this->params['name']);
 
-        $user_service->saveUser($this->getUser(), ['name']);
+        $user_service->saveUser($this->getUser());
 
-        return new UserResponse($this->getUser()->toArray());
+        return UserResponse::createFromEntity($this->getUser());
     }
 
     /**
@@ -236,6 +217,6 @@ class User extends AbstractApiController {
 */
     public function get()
     {
-        return new UserResponse($this->getUser()->toArray());
+        return UserResponse::createFromEntity($this->getUser());
     }
 }

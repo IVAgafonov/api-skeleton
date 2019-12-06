@@ -18,7 +18,7 @@ class SuccessAuthResponse extends AbstractResponse
     public $token;
 
     /**
-     * @OA\Property(enum={"PERMANENT", "TEMPORARY"}, example="PERMANENT")
+     * @OA\Property(ref="#/components/schemas/TokenType")
      *
      * @var string
      */

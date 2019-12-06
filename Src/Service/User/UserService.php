@@ -2,6 +2,8 @@
 
 namespace App\Service\User;
 
+use App\Entity\AbstractEnum;
+use App\Entity\AbstractSet;
 use App\Entity\User\User;
 use App\Entity\User\UserInterface;
 use App\System\DataProvider\Mysql\DataProviderInterface;
@@ -18,10 +20,10 @@ class UserService {
         $this->dp = $dp;
     }
 
-    public function createUser($data)
+    public function createUser($email, $name, $password)
     {
         $this->dp->doQuery("INSERT INTO `app_users` (`email`, `name`, `password`) ".
-            "VALUES (".$this->dp->quote($data['email']).", ".$this->dp->quote($data['name']).", ".$this->dp->quote($data['password']).")");
+            "VALUES (".$this->dp->quote($email).", ".$this->dp->quote($name).", ".$this->dp->quote($password).")");
         $user_id = $this->dp->getLastInsertId();
         if ($user_id) {
             return $this->getUserById($user_id);
@@ -29,34 +31,40 @@ class UserService {
         return null;
     }
 
-    public function saveUser(User $user, array $fields = [])
+    public function saveUser(User $user)
     {
-        $params = self::toDb($user->toArray());
+        $params = $user->toArray();
 
-        $insert = [];
+        if (empty($params)) {
+            throw new \Exception("Empty params to save of object: ".User::class);
+        }
+
+        $insert_params = [];
+        $insert_values = [];
+        $duplicate_values = [];
 
         foreach ($params as $field => $param) {
-            if (!empty($fields) && !in_array($field, $fields)) {
-                continue;
-            }
-            if ($param === null) {
-                continue;
-            }
-            $insert[] = "`".$field."` = ".$this->dp->quote($param);
+            $insert_params[] = "`".$field."`";
+            $insert_values[] = $this->dp->quote($param);
+            $duplicate_values[] = "`".$field."` = ".$this->dp->quote($param);
         }
 
-        if ($insert) {
-            $this->dp->doQuery("UPDATE `app_users` ".
-                "SET ".implode(", ", $insert)." WHERE id = ".$user->getId());
+        $this->dp->doQuery("INSERT INTO `app_users` ".
+            "(".implode(",", $insert_params).") VALUES (".implode(",", $insert_values).") ".
+            "ON DUPLICATE KEY UPDATE ".implode(",", $duplicate_values));
+        if ($this->dp->getLastInsertId()) {
+            $user = $this->getUserById($this->dp->getLastInsertId());
+        } else {
+            $user = $this->getUserById($user->getId());
         }
-
+        return $user;
     }
 
     public function getUserById(int $id)
     {
         $user = $this->dp->getArray("SELECT * FROM `app_users` WHERE id = ".$id);
         if ($user) {
-            return new User(self::fromDb($user));
+            return new User($user);
         }
         return null;
     }
@@ -65,21 +73,8 @@ class UserService {
     {
         $user = $this->dp->getArray("SELECT * FROM `app_users` WHERE email = ".$this->dp->quote($email));
         if ($user) {
-            return new User(self::fromDb($user));
+            return new User($user);
         }
         return null;
-    }
-
-    protected static function fromDb(array $user)
-    {
-        $user['groups'] = explode(",", $user['groups']);
-        return $user;
-    }
-
-    protected static function toDb(array $user)
-    {
-        $user['groups'] = implode(",", $user['groups']);
-        unset($user['id']);
-        return $user;
     }
 }

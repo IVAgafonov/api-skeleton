@@ -38,37 +38,23 @@ class InitUser implements MiddlewareInterface
             $token = AuthService::getTokenFromHeaders($headers);
 
             if (!$token) {
-                return new ErrorAuthResponse([
-                    'message' => 'Unauthorized'
-                ]);
+                return new ErrorAuthResponse('Unauthorized');
             }
 
             if (!$auth_service->updateTokenExpireDate($token)) {
-                return new ErrorAuthResponse([
-                    'message' => 'Unauthorized [Invalid token]'
-                ]);
+                return new ErrorAuthResponse('Unauthorized [Invalid token]');
             }
 
             $user_id = $auth_service->getUserIdByToken($token);
 
             if (!$user_id) {
-                return new ErrorAuthResponse([
-                    'message' => 'Unauthorized [User not found]'
-                ]);
+                return new ErrorAuthResponse('Unauthorized [User not found]');
             }
 
             $user = $user_service->getUserById($user_id);
 
-            if (!$user) {
-                return new ErrorAuthResponse([
-                    'message' => 'Unauthorized [Invalid user]'
-                ]);
-            }
-
-            if (empty(array_intersect($user->getGroups(), $extra_params['allowed_groups']))) {
-                return new ErrorAuthResponse([
-                    'message' => 'Unauthorized [Group not allowed]'
-                ]);
+            if (empty(array_intersect($user->getGroups()->items, $extra_params['allowed_groups']))) {
+                return new ErrorAuthResponse('Unauthorized [Group not allowed]');
             }
 
             $controller->setUser($user);

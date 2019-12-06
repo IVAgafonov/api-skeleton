@@ -4,6 +4,7 @@ namespace App\Validator\Auth;
 
 use App\Api\Response\Error\ClientErrorResponse;
 use App\Api\Response\ResponseInterface;
+use App\Entity\Token\TokenType;
 use App\Validator\ValidatorInterface;
 
 class AuthValidator implements ValidatorInterface {
@@ -20,34 +21,23 @@ class AuthValidator implements ValidatorInterface {
         switch ($context) {
             case self::AUTH_LOGIN:
                 if (empty($params['email']) || !is_string($params['email']) || mb_strlen($params['email']) > 255) {
-                    return new ClientErrorResponse([
-                        'field' => 'email',
-                        'message' => 'Invalid email'
-                    ]);
+                    return new ClientErrorResponse('email', 'Invalid email');
                 }
                 if (!preg_match("/\w+@\w+\.\w+/i", $params['email'])) {
-                    return new ClientErrorResponse([
-                        'field' => 'email',
-                        'message' => 'Invalid email format'
-                    ]);
+                    return new ClientErrorResponse('email', 'Invalid email format');
                 }
                 if (empty($params['password']) || !is_string($params['password'])) {
-                    return new ClientErrorResponse([
-                        'field' => 'password',
-                        'message' => 'Invalid password'
-                    ]);
+                    return new ClientErrorResponse('password', 'Invalid password');
                 }
                 if (mb_strlen($params['password']) < 6 || mb_strlen($params['password']) > 40) {
-                    return new ClientErrorResponse([
-                        'field' => 'password',
-                        'message' => 'Password must contain 6 - 40 symbols'
-                    ]);
+                    return new ClientErrorResponse('password', 'Password must contain 6 - 40 symbols');
                 }
-                if (!empty($params['permanent']) && !is_bool($params['permanent'])) {
-                    return new ClientErrorResponse([
-                        'field' => 'permanent',
-                        'message' => 'Invalid value'
-                    ]);
+                if (!empty($params['token_type'])) {
+                    try {
+                        TokenType::validate($params['token_type']);
+                    } catch (\Throwable $e) {
+                        return new ClientErrorResponse('token_type', $e->getMessage());
+                    }
                 }
                 break;
         }

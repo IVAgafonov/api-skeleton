@@ -19,11 +19,12 @@ class ServerErrorResponse extends AbstractResponse
 
     /**
      * ServerErrorResponse constructor.
-     * @param array $data
+     * @param string $message
      * @param int $response_code
      */
-    public function __construct(array $data, int $response_code = 500)
+    public function __construct(string $message, int $response_code = 500)
     {
-        parent::__construct($data, $response_code);
+        $this->message = $message;
+        parent::__construct($response_code);
     }
 }

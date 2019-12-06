@@ -8,6 +8,7 @@ use App\Api\Response\Auth\SuccessAuthResponse;
 use App\Api\Response\Error\ClientErrorResponse;
 use App\Api\Response\EmptyResponse;
 use App\Api\Response\Error\ServerErrorResponse;
+use App\Entity\Token\TokenType;
 use App\Service\Auth\AuthService;
 use App\Service\Crypt\CryptService;
 use App\Service\User\UserService;
@@ -33,11 +34,10 @@ class Auth extends AbstractApiController {
      *             type="object",
      *             required={"email", "password"},
      *             properties={
-     *                 @OA\Property(property="email", type="string", format="email"),
-     *                 @OA\Property(property="password", type="string", format="password"),
-     *                 @OA\Property(property="permanent", type="bool"),
-     *             },
-     *             example={"email": "test@site.ru", "password": "654321", "permanent": true}
+     *                 @OA\Property(property="email", type="string", format="email", example="test@site.com"),
+     *                 @OA\Property(property="password", type="string", format="password", example="12344321"),
+     *                 @OA\Property(property="token_type", ref="#/components/schemas/TokenType"),
+     *             }
      *         )
      *     ),
      *     @OA\Response(
@@ -91,35 +91,20 @@ class Auth extends AbstractApiController {
             return $response;
         }
 
-        $token_type =
-            (!empty($this->params['permanent']) ? AuthService::TOKEN_TYPE_PERMANENT : AuthService::TOKEN_TYPE_TEMPORARY);
+        $token_type = new TokenType($this->params['token_type'] ?? TokenType::TEMPORARY);
 
         $user = $user_service->getUserByEmail($this->params['email']);
 
         if (!$user) {
-            return new ClientErrorResponse([
-                'field' => "email",
-                'message' => "User doesn't exist"
-            ]);
+            return new ClientErrorResponse("email", "User doesn't exist");
         }
 
         if ($user->getPassword() !== CryptService::hashPassword($this->params['password'])) {
-            return new ClientErrorResponse([
-                'field' => "password",
-                'message' => "Invalid password"
-            ]);
+            return new ClientErrorResponse("password", "Invalid password");
         }
 
         $auth_service = new AuthService($dp);
-        $auth = $auth_service->authUser($user->getId(), $token_type);
-
-        if (!$auth) {
-            return new ErrorAuthResponse([
-                'message' => "Unauthorized"
-            ]);
-        }
-
-        return new SuccessAuthResponse($auth);
+        return $auth_service->authUser($user, $token_type);
     }
 
     /**
@@ -173,9 +158,6 @@ class Auth extends AbstractApiController {
         $token = AuthService::getTokenFromHeaders($this->headers);
 
         $all_devices = (bool)($this->params['all_devices'] ?? false);
-        if ($all_devices && mb_strtolower($this->params['all_devices']) == 'false') {
-            $all_devices = false;
-        }
 
         $auth_service->logoutUser($token, $all_devices);
 

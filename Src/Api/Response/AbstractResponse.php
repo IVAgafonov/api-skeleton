@@ -2,26 +2,62 @@
 
 namespace App\Api\Response;
 
+use App\Entity\AbstractEntity;
+use App\Entity\AbstractEnum;
+use App\Entity\AbstractSet;
+use function Couchbase\zlibDecompress;
+
 class AbstractResponse implements ResponseInterface
 {
     /**
      * AbstractResponse constructor.
-     * @param array $values
      * @param int $response_code
      */
-    public function __construct(array $values = [], $response_code = 200)
+    public function __construct($response_code = 200)
     {
         http_response_code($response_code);
-        foreach ($values as $property => $value) {
-            if (property_exists($this, $property)) {
-                if (is_numeric($value)) {
-                    $this->$property = (float)$value;
-                } else {
-                    $this->$property = $value;
-                }
+    }
 
+    /**
+     * Fill response from array.
+     * @param array $values
+     * @return self
+     */
+    public static function createFromArray(array $values)
+    {
+        $response = new static();
+        foreach ($values as $property => $value) {
+            if (property_exists($response, $property)) {
+                $response->$property = $value;
             }
         }
+        return $response;
+    }
+
+    /**
+     * @param AbstractEntity $entity
+     * @return static
+     * @throws \Exception
+     */
+    public static function createFromEntity(AbstractEntity $entity)
+    {
+        $response = new static();
+        $vars = get_class_vars(static::class);
+
+        foreach ($vars as $property => $value) {
+            $method = str_replace("_", "", "get".ucwords($property, '_'));
+            if (method_exists($entity, $method)) {
+                $value = $entity->$method();
+                if ($value instanceof AbstractEnum) {
+                    $value = $value->getValue();
+                } elseif ($value instanceof AbstractSet) {
+                    $value = $value->getArray();
+                }
+                $response->$property = $value;
+            }
+        }
+
+        return $response;
     }
 
     public static function getResponseType()

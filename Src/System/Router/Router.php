@@ -83,7 +83,7 @@ class Router
                 'response' => self::$response
             ]);
         });
-        self::response(new ServerErrorResponse(["message" => "Server made a boo boo"]));
+        self::response(new ServerErrorResponse("Server made a boo boo"));
 
         \App\System\Config\Config::init();
         session_start();
@@ -210,19 +210,20 @@ class Router
                                 //middleware
                                 $middlewares = Config::get('app.middleware');
 
-                                if (is_array($middlewares) && !empty($middlewares))
-                                foreach ($middlewares as $middleware) {
-                                   $mw = new $middleware();
-                                   if ($mw instanceof MiddlewareInterface) {
-                                       $response = $mw($class, self::$headers, self::$params, [
-                                           'allowed_groups' => $allowed_groups
-                                       ]);
-                                       if ($response instanceof ResponseInterface) {
-                                           return $response;
-                                       }
-                                   } else {
-                                       throw new \Exception("Invalid middleware: ".$middleware);
-                                   }
+                                if (is_array($middlewares) && !empty($middlewares)) {
+                                    foreach ($middlewares as $middleware) {
+                                        $mw = new $middleware();
+                                        if ($mw instanceof MiddlewareInterface) {
+                                            $response = $mw($class, self::$headers, self::$params, [
+                                                'allowed_groups' => $allowed_groups
+                                            ]);
+                                            if ($response instanceof ResponseInterface) {
+                                                return $response;
+                                            }
+                                        } else {
+                                            throw new \Exception("Invalid middleware: ".$middleware);
+                                        }
+                                    }
                                 }
 
                                 //controller
@@ -236,6 +237,6 @@ class Router
                 }
             }
         }
-        return new ClientErrorResponse(["message" => "Invalid route"], 404);
+        return new ClientErrorResponse("Invalid route", 404);
     }
 }

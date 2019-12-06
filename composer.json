@@ -16,7 +16,9 @@
         "zircote/swagger-php": "^3.0",
         "hellogerard/jobby": "^3.2",
         "psr/log": "^1.0",
-        "robmorgan/phinx": "0.10.*"
+        "robmorgan/phinx": "0.10.*",
+        "ext-json": "*",
+        "ext-pdo": "*"
     },
     "require-dev": {
         "codeception/codeception": "^3.0",
@@ -24,7 +26,7 @@
     },
     "scripts": {
         "migrate": "./vendor/bin/phinx migrate -e production",
-        "docs": "./vendor/bin/openapi -o ./docs ./Src/Api/",
+        "docs": "./vendor/bin/openapi -o ./docs ./Src/Api/ ./Src/Entity/",
         "test": "./vendor/bin/codecept run"
     }
 }
