@@ -8,14 +8,13 @@ services:
   - docker
 before_install:
   - mysql -u root -e 'CREATE DATABASE IF NOT EXISTS app_main;'
-before_script:
+script:
   - composer install --no-interaction
   - composer docs
   - composer migrate
   - php -S 127.0.0.1:8080 -t /home/travis/build/IVAgafonov/api-skeleton > /dev/null 2>&1 &
-script:
-  - composer test
 after_script:
+  - composer test
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
   - docker build -t igoradm90/skeleton-api:$IMAGE_VERSION .
   - docker push igoradm90/skeleton-api:$IMAGE_VERSION

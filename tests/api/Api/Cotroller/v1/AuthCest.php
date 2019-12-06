@@ -27,7 +27,7 @@ class AuthCest
         $I->seeResponseContainsJson([
             "response_type" => "SuccessAuthResponse",
             "response" => [
-                "token_type" => "TEMPORARY"
+                "token_type" => "PERMANENT"
             ]
         ]);
 
