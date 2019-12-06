@@ -237,6 +237,6 @@ class Router
                 }
             }
         }
-        return new ClientErrorResponse("Invalid route", 404);
+        return new ClientErrorResponse("Router", "Invalid route", 404);
     }
 }

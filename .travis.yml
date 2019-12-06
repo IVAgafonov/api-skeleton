@@ -1,6 +1,6 @@
 language: php
 env:
-  - IMAGE_VERSION="v0.0.7"
+  - IMAGE_VERSION="v0.1.0"
 php:
   - 7.2
 services:

@@ -20,7 +20,7 @@ class IndexCest
         $I->seeResponseContainsJson([
             "response_type" => "ClientErrorResponse",
             "response" => [
-                "field" => null,
+                "field" => 'Router',
                 "message" => "Invalid route"
             ]
         ]);

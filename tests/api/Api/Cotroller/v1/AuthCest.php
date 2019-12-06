@@ -27,7 +27,7 @@ class AuthCest
         $I->seeResponseContainsJson([
             "response_type" => "SuccessAuthResponse",
             "response" => [
-                "token_type" => "PERMANENT"
+                "token_type" => "TEMPORARY"
             ]
         ]);
 
@@ -73,7 +73,7 @@ class AuthCest
         $I->sendPOST('/api/v1/auth/login', [
             'email' => $user_email,
             'password' => $password,
-            'permanent' => true
+            'token_type' => 'PERMANENT'
         ]);
 
         $I->seeResponseCodeIs(HttpCode::OK);
