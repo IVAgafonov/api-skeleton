@@ -176,7 +176,7 @@ class Router
      */
     protected static function initController(string $path, string $method)
     {
-        $routeSchema = Yaml::parseFile(__DIR__."/../../../docs/openapi.yaml");
+        $routeSchema = Yaml::parseFile(__DIR__."/../../../www/docs/openapi.yaml");
 
         if (empty($routeSchema['paths']) || !is_array($routeSchema['paths'])) {
             throw new \Exception("Invalid route list", 500);
