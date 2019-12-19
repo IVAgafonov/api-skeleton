@@ -93,22 +93,6 @@ class AuthService {
         return false;
     }
 
-    /**
-     * @param string $token
-     * @return User|null
-     */
-    public function getUserByToken(string $token)
-    {
-        $data = $this->dp->getArray("SELECT * FROM `app_users_auth_tokens` ".
-            "WHERE `token` = ".$this->dp->quote($token)." ".
-            "AND (`expire_date` > ".$this->dp->quote(date("Y-m-d H:i:s"))." OR `type` = ".$this->dp->quote(TokenType::PERMANENT).")");
-        if ($data) {
-            print_r($data);
-            return new User($data);
-        }
-        return null;
-    }
-
     public function getUserIdByToken(string $token)
     {
         return $this->dp->getValue("SELECT user_id FROM `app_users_auth_tokens` ".

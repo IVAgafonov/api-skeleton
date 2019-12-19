@@ -8,6 +8,7 @@ use App\Api\Response\AbstractResponse;
 use App\Api\Response\Error\ClientErrorResponse;
 use App\Api\Response\Error\ServerErrorResponse;
 use App\Api\Response\ResponseInterface;
+use App\System\App\App;
 use App\System\Config\Config;
 use App\System\Reporter\Reporter;
 use Symfony\Component\Yaml\Yaml;
@@ -46,37 +47,7 @@ class Router
 
     public static function init()
     {
-        set_error_handler(function (int $code, string $message, string $file, int $line, $context = null) {
-            $msg = $message." in file: ".$file." on line: ".$line.". Code: ".$code;
-            error_log($msg);
-            die();
-        });
-        set_exception_handler(function (\Throwable $e) {
-            if ($e->getCode() > 300 && $e->getCode() < 600) {
-                http_response_code($e->getCode());
-            }
-            $msg = "Thrown exception [".get_class($e)."] with message: ".$e->getMessage()." in file: ".$e->getFile()." on line: ".$e->getLine();
-            $trace = $e->getTrace();
-
-            if ($trace && is_array($trace)) {
-                $msg .= " Trace:";
-                foreach ($trace as $i => $t) {
-                    if (!empty($t['file']) && !empty($t['line'])) {
-                        $msg .= "[".$i." => ".$t['file'].": ".$t['line']."]";
-                    }
-                }
-            }
-            error_log($msg);
-            die();
-        });
         register_shutdown_function(function () {
-            $error = error_get_last();
-
-            if ($error) {
-                $msg = "[".$error['type']."] with message: ".$error['message']." in file: " . $error['file'] . " on line: " . $error['line'];
-                error_log("[".date("d-M-Y H:i:s")."] ".$msg);
-            }
-
             echo json_encode([
                 'timestamp' => (new \DateTime())->getTimestamp(),
                 'response_type' => self::$response::getResponseType(),
@@ -85,7 +56,6 @@ class Router
         });
         self::response(new ServerErrorResponse("Server made a boo boo"));
 
-        \App\System\Config\Config::init();
         session_start();
         header("Content-Type: application/json");
 
@@ -230,6 +200,7 @@ class Router
                                 $class->setHeaders(self::$headers);
                                 $class->setParams(self::$params);
                                 $class->setMethod(self::$method);
+                                $class->setContainer(App::getContainer());
                                 return $class->$m();
                             }
                         }

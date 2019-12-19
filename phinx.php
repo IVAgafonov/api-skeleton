@@ -4,7 +4,7 @@ require_once __DIR__.'/vendor/autoload.php';
 
 \App\System\Config\Config::init();
 
-$db = new \App\System\DataProvider\Mysql\DataProvider(\App\System\Config\Config::get('mysql.main'));
+$db = \App\System\App\App::get(\App\System\DataProvider\Mysql\DataProviderInterface::class);
 
 return
 [

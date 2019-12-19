@@ -23,10 +23,10 @@ interface UserInterface extends AbstractEntityInterface {
     public function getName();
 
     /**
-     * @param string $email
+     * @param string $name
      * @return $this
      */
-    public function setName(string $email);
+    public function setName(string $name);
 
     /**
      * @return string

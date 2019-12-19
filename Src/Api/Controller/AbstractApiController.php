@@ -3,6 +3,7 @@
 namespace App\Api\Controller;
 
 use App\Entity\User\User;
+use DI\Container;
 
 /**
  * Class AbstractController
@@ -59,6 +60,27 @@ abstract class AbstractApiController {
 	 * @var array
 	 */
 	protected $params = [];
+
+    /**
+     * @var Container
+     */
+    protected $container = null;
+
+    /**
+     * @param Container $container
+     */
+    public function setContainer(Container $container)
+    {
+        $this->container = $container;
+    }
+
+    /**
+     * @return Container
+     */
+    public function getContainer()
+    {
+        return $this->container;
+    }
 
 	/**
 	 * @param string $method

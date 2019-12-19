@@ -13,7 +13,7 @@ use App\System\Config\Config;
 use App\System\DataProvider\Mysql\DataProvider;
 
 /**
- * Class UpdateToken
+ * Class InitUser
  * @package App\Api\Middleware\Auth
  */
 class InitUser implements MiddlewareInterface
