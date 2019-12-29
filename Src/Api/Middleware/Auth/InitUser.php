@@ -70,7 +70,7 @@ class InitUser implements MiddlewareInterface
                 ]);
             }
 
-            if (empty(array_intersect($user->getGroups(), $extra_params['allowed_groups']))) {
+            if (empty(array_intersect($user->getGroups()->getArray(), $extra_params['allowed_groups']))) {
                 return ErrorAuthResponse::createFromArray([
                     'message' => 'Unauthorized [Group not allowed]'
                 ]);
