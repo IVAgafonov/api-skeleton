@@ -97,11 +97,11 @@ class User extends AbstractApiController {
             return new ClientErrorResponse('email', 'User with this email already exists');
         }
 
-        $user = $user_service->createUser([
-            'email' => $this->params['email'],
-            'name' => $this->params['name'],
-            'password' => CryptService::hashPassword($this->params['password'])
-        ]);
+        $user = $user_service->createUser(
+            $this->params['email'],
+            $this->params['name'],
+            CryptService::hashPassword($this->params['password'])
+        );
 
         if (!$user) {
             return new ClientErrorResponse("email", "Can't create new user. Please, try later");
@@ -190,7 +190,7 @@ class User extends AbstractApiController {
 
         $this->getUser()->setName($this->params['name']);
 
-        $user_service->saveUser($this->getUser(), ['name']);
+        $user_service->saveUser($this->getUser());
 
         return UserResponse::createFromArray($this->getUser()->toArray());
     }
