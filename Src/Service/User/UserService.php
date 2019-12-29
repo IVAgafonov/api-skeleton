@@ -33,7 +33,7 @@ class UserService {
 
     public function saveUser(User $user)
     {
-        $params = $user->toArray();
+        $params = $user->toDb();
 
         if (empty($params)) {
             throw new \Exception("Empty params to save of object: ".User::class);

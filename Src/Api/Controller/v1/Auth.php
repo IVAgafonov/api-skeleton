@@ -95,7 +95,7 @@ class Auth extends AbstractApiController {
             return $response;
         }
 
-        $token_type = new TokenType($this->params['permanent']);
+        $token_type = new TokenType($this->params['token_type']);
 
         $user = $user_service->getUserByEmail($this->params['email']);
 
