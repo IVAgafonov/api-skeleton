@@ -9,6 +9,7 @@ use App\Api\Response\Error\ClientErrorResponse;
 use App\Api\Response\EmptyResponse;
 use App\Api\Response\Error\ServerErrorResponse;
 use App\Api\Response\User\UserResponse;
+use App\Entity\Token\TokenType;
 use App\Service\Auth\AuthService;
 use App\Service\Crypt\CryptService;
 use App\Service\User\UserService;
@@ -108,16 +109,17 @@ class User extends AbstractApiController {
         }
 
         //$auth_service = new AuthService($dp);
+        /** @var AuthService $auth_service */
         $auth_service = $this->container->get(AuthService::class);
-        $auth = $auth_service->authUser($user->getId());
+        $auth = $auth_service->authUser($user, new TokenType(TokenType::TEMPORARY));
 
         if (!$auth) {
-            return new ErrorAuthResponse([
+            return ErrorAuthResponse::createFromArray([
                 'message' => "Unauthorized"
             ]);
         }
 
-        return SuccessAuthResponse::createFromArray($auth);
+        return $auth;
     }
 
     /**
