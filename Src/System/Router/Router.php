@@ -5,9 +5,11 @@ namespace App\System\Router;
 use App\Api\Controller\AbstractApiController;
 use App\Api\Middleware\MiddlewareInterface;
 use App\Api\Response\AbstractResponse;
+use App\Api\Response\EmptyResponse;
 use App\Api\Response\Error\ClientErrorResponse;
 use App\Api\Response\Error\ServerErrorResponse;
-use App\Api\Response\ResponseInterface;
+use App\Api\Response\ResponseRootInterface;
+use App\System\App\App;
 use App\System\Config\Config;
 use App\System\Reporter\Reporter;
 use Symfony\Component\Yaml\Yaml;
@@ -40,49 +42,35 @@ class Router
     protected static $method = 'GET';
 
     /**
-     * @var ResponseInterface
+     * @var ResponseRootInterface
      */
     protected static $response;
 
     public static function init()
     {
-        set_error_handler(function (int $code, string $message, string $file, int $line, $context = null) {
-            $msg = $message." in file: ".$file." on line: ".$line.". Code: ".$code;
-            error_log($msg);
-            die();
-        });
-        set_exception_handler(function (\Throwable $e) {
-            if ($e->getCode() > 300 && $e->getCode() < 600) {
-                http_response_code($e->getCode());
-            }
-            $msg = "Thrown exception [".get_class($e)."] with message: ".$e->getMessage()." in file: ".$e->getFile()." on line :".$e->getLine();
-            $trace = $e->getTrace();
-
-            if ($trace && is_array($trace)) {
-                $msg .= "\tTrace:";
-                foreach ($trace as $i => $t) {
-                    $msg .= "[".$i." => ".$t['file'].": ".$t['line']."]";
-                }
-            }
-            error_log($msg);
-            die();
-        });
         register_shutdown_function(function () {
+            http_response_code(self::$response->getResponseCode());
             echo json_encode([
                 'timestamp' => (new \DateTime())->getTimestamp(),
                 'response_type' => self::$response::getResponseType(),
                 'response' => self::$response
             ]);
         });
-        self::response(new ServerErrorResponse(["message" => "Server made a boo boo"]));
+        self::response(new ServerErrorResponse("Server made a boo boo"));
 
-        \App\System\Config\Config::init();
         session_start();
         header("Content-Type: application/json");
+        header("Access-Control-Allow-Origin: *");
+        header("Access-Control-Allow-Methods: *");
+        header("Access-Control-Allow-Headers: *");
 
         if (!empty($_SERVER['REQUEST_METHOD'] && in_array($_SERVER['REQUEST_METHOD'], ['GET', 'POST', 'DELETE', 'PUT', 'PATCH']))) {
             self::$method = $_SERVER['REQUEST_METHOD'];
         } else {
+            if (!empty($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+                self::response(new EmptyResponse());
+                die();
+            }
             throw new \Exception("Invalid request method", 400);
         }
 
@@ -107,7 +95,7 @@ class Router
      * @param $response
      * @throws \Exception
      */
-    protected static function response(ResponseInterface $response)
+    protected static function response(ResponseRootInterface $response)
     {
         self::$response = $response;
     }
@@ -167,7 +155,7 @@ class Router
      */
     protected static function initController(string $path, string $method)
     {
-        $routeSchema = Yaml::parseFile(__DIR__."/../../../docs/openapi.yaml");
+        $routeSchema = Yaml::parseFile(__DIR__."/../../../www/docs/openapi.yaml");
 
         if (empty($routeSchema['paths']) || !is_array($routeSchema['paths'])) {
             throw new \Exception("Invalid route list", 500);
@@ -195,31 +183,34 @@ class Router
                         }
                         if (class_exists($controller[0])) {
                             $allowed_groups = $info['security'][0]['TokenAuth'] ?? [];
+                            /** @var AbstractApiController $class */
                             $class = new $controller[0]();
                             $m = $controller[1];
                             if (method_exists($class, $controller[1])) {
                                 //middleware
                                 $middlewares = Config::get('app.middleware');
 
-                                if (is_array($middlewares) && !empty($middlewares))
-                                foreach ($middlewares as $middleware) {
-                                   $mw = new $middleware();
-                                   if ($mw instanceof MiddlewareInterface) {
-                                       $response = $mw($class, self::$headers, self::$params, [
-                                           'allowed_groups' => $allowed_groups
-                                       ]);
-                                       if ($response instanceof ResponseInterface) {
-                                           return $response;
-                                       }
-                                   } else {
-                                       throw new \Exception("Invalid middleware: ".$middleware);
-                                   }
+                                if (is_array($middlewares) && !empty($middlewares)) {
+                                    foreach ($middlewares as $middleware) {
+                                        $mw = new $middleware();
+                                        if ($mw instanceof MiddlewareInterface) {
+                                            $response = $mw($class, App::getContainer(), self::$headers, self::$params, [
+                                                'allowed_groups' => $allowed_groups
+                                            ]);
+                                            if ($response instanceof ResponseRootInterface) {
+                                                return $response;
+                                            }
+                                        } else {
+                                            throw new \Exception("Invalid middleware: ".$middleware);
+                                        }
+                                    }
                                 }
 
                                 //controller
                                 $class->setHeaders(self::$headers);
                                 $class->setParams(self::$params);
                                 $class->setMethod(self::$method);
+                                $class->setContainer(App::getContainer());
                                 return $class->$m();
                             }
                         }
@@ -227,6 +218,6 @@ class Router
                 }
             }
         }
-        return new ClientErrorResponse(["message" => "Invalid route"], 404);
+        return new ClientErrorResponse("Router", "Invalid route", 404);
     }
 }

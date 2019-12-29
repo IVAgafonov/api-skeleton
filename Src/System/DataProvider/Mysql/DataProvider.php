@@ -12,13 +12,34 @@ class DataProvider implements DataProviderInterface
      *
      * @var \PDO
      */
-    private $pdo;
+    private $pdo = null;
+
     /**
      * PDO Statement object
      *
      * @var \PDOStatement
      */
     private $statement;
+
+    /**
+     * @var string
+     */
+    private $db;
+
+    /**
+     * @var string
+     */
+    private $user;
+
+    /**
+     * @var string
+     */
+    private $password;
+
+    /**
+     * @var string
+     */
+    private $host;
 
     /**
      * DataProvider constructor.
@@ -35,10 +56,13 @@ class DataProvider implements DataProviderInterface
      */
     public function __construct(array $config)
     {
-        if (empty($config['user']) || empty($config['host']) || !isset($config['db'])) {
+        if (empty($config['user']) || empty($config['host']) || !isset($config['db']) || !isset($config['password'])) {
             throw new \Exception("Invalid mysql database params");
         }
-        $this->pdo = new \PDO("mysql:dbname=" . $config['db'] . ";host=" . $config['host'] . ";charset=utf8", $config['user'], $config['password']);
+        $this->db = $config['db'];
+        $this->user = $config['user'];
+        $this->password = $config['password'];
+        $this->host = $config['host'];
     }
 
     /**
@@ -46,46 +70,64 @@ class DataProvider implements DataProviderInterface
      */
     public function getPdo()
     {
+        if (!$this->pdo) {
+            $this->pdo = new \PDO(
+                "mysql:dbname=" . $this->db . ";host=" . $this->host . ";charset=utf8",
+                $this->user,
+                $this->password
+            );
+
+        }
         return $this->pdo;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDb()
+    {
+        return $this->db;
     }
 
     /**
      * Get objects by sql query
      *
-     * @param string $query  Sql query
+     * @param string $query Sql query
      * @param string $object Object name
      *
      * @return array|null
      */
     public function getObjects($query, $object)
     {
-        $this->statement = $this->pdo->query($query);
+        $this->statement = $this->getPdo()->query($query);
         if ($this->statement) {
             $this->statement->setFetchMode(\PDO::FETCH_CLASS, $object);
-            $objects =  $this->statement->fetchAll();
+            $objects = $this->statement->fetchAll();
             if ($objects) {
                 return $objects;
             }
         }
         return null;
     }
+
     /**
      * Get object by sql query
      *
-     * @param string $query  Sql query
+     * @param string $query Sql query
      * @param string $object Object name
      *
      * @return array|null
      */
     public function getObject($query, $object)
     {
-        $this->statement = $this->pdo->query($query);
+        $this->statement = $this->getPdo()->query($query);
         if ($this->statement) {
             $this->statement->setFetchMode(\PDO::FETCH_CLASS, $object);
             return $this->statement->fetch();
         }
         return null;
     }
+
     /**
      * Get arrays by sql query
      *
@@ -95,7 +137,7 @@ class DataProvider implements DataProviderInterface
      */
     public function getArrays($query)
     {
-        $this->statement = $this->pdo->query($query);
+        $this->statement = $this->getPdo()->query($query);
 
         if ($this->statement) {
             $result = $this->statement->fetchAll(\PDO::FETCH_ASSOC);
@@ -105,6 +147,7 @@ class DataProvider implements DataProviderInterface
         }
         return null;
     }
+
     /**
      * Get array by sql query
      *
@@ -114,12 +157,13 @@ class DataProvider implements DataProviderInterface
      */
     public function getArray($query)
     {
-        $this->statement = $this->pdo->query($query);
+        $this->statement = $this->getPdo()->query($query);
         if ($this->statement) {
             return $this->statement->fetch(\PDO::FETCH_ASSOC);
         }
         return null;
     }
+
     /**
      * Get array by sql query
      *
@@ -129,7 +173,7 @@ class DataProvider implements DataProviderInterface
      */
     public function getValue($query)
     {
-        $this->statement = $this->pdo->query($query);
+        $this->statement = $this->getPdo()->query($query);
         if ($this->statement) {
             $value = $this->statement->fetch(\PDO::FETCH_BOTH);
             if (!empty($value[0])) {
@@ -138,6 +182,7 @@ class DataProvider implements DataProviderInterface
         }
         return null;
     }
+
     /**
      * Execute sql query
      *
@@ -147,12 +192,13 @@ class DataProvider implements DataProviderInterface
      */
     public function doQuery($query)
     {
-        $this->statement = $this->pdo->query($query);
+        $this->statement = $this->getPdo()->query($query);
         if ($this->statement && $this->statement->rowCount()) {
             return $this->statement->rowCount();
         }
         return null;
     }
+
     /**
      * Quote string
      *
@@ -162,7 +208,7 @@ class DataProvider implements DataProviderInterface
      */
     public function quote($str)
     {
-        return $this->pdo->quote($str);
+        return $this->getPdo()->quote($str);
     }
 
     /**
@@ -181,7 +227,7 @@ class DataProvider implements DataProviderInterface
      */
     public function getLastInsertId()
     {
-        return $this->pdo->lastInsertId();
+        return $this->getPdo()->lastInsertId();
     }
 
     /**
@@ -189,7 +235,7 @@ class DataProvider implements DataProviderInterface
      */
     public function getLastError()
     {
-        return $this->pdo->errorInfo();
+        return $this->getPdo()->errorInfo();
     }
 
     /**
@@ -197,6 +243,6 @@ class DataProvider implements DataProviderInterface
      */
     public function getLastErrno()
     {
-        return $this->pdo->errorCode();
+        return $this->getPdo()->errorCode();
     }
 }

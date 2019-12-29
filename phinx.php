@@ -4,7 +4,8 @@ require_once __DIR__.'/vendor/autoload.php';
 
 \App\System\Config\Config::init();
 
-$db = new \App\System\DataProvider\Mysql\DataProvider(\App\System\Config\Config::get('mysql.main'));
+/** @var \App\System\DataProvider\Mysql\DataProviderInterface $db */
+$db = \App\System\App\App::get(\App\System\DataProvider\Mysql\DataProviderInterface::class);
 
 return
 [
@@ -14,10 +15,10 @@ return
     ],
     'environments' => [
         'default_migration_table' => 'phinxlog',
-        'default_database' => 'app_main',
+        'default_database' =>  $db->getDb(),
         'production' => [
             'connection' => $db->getPdo(),
-            'name' => 'app_main',
+            'name' => $db->getDb(),
         ]
     ],
     'version_order' => 'creation'

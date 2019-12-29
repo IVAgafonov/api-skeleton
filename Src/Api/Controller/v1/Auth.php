@@ -13,6 +13,7 @@ use App\Service\Crypt\CryptService;
 use App\Service\User\UserService;
 use App\System\Config\Config;
 use App\System\DataProvider\Mysql\DataProvider;
+use App\System\DataProvider\Mysql\DataProviderInterface;
 use App\Validator\Auth\AuthValidator;
 use App\Validator\User\UserValidator;
 
@@ -84,8 +85,10 @@ class Auth extends AbstractApiController {
      */
     public function login()
     {
-        $dp = new DataProvider(Config::get('mysql.main'));
-        $user_service = new UserService($dp);
+        //$dp = $this->container->get(DataProviderInterface::class);
+        //$user_service = new UserService($dp);
+        /** @var UserService $user_service */
+        $user_service = $this->container->get(UserService::class);
 
         if ($response = AuthValidator::validate($this->params, AuthValidator::AUTH_LOGIN)) {
             return $response;
@@ -97,20 +100,16 @@ class Auth extends AbstractApiController {
         $user = $user_service->getUserByEmail($this->params['email']);
 
         if (!$user) {
-            return new ClientErrorResponse([
-                'field' => "email",
-                'message' => "User doesn't exist"
-            ]);
+            return new ClientErrorResponse("email", "User doesn't exist");
         }
 
         if ($user->getPassword() !== CryptService::hashPassword($this->params['password'])) {
-            return new ClientErrorResponse([
-                'field' => "password",
-                'message' => "Invalid password"
-            ]);
+            return new ClientErrorResponse("password", "Invalid password");
         }
 
-        $auth_service = new AuthService($dp);
+        //$auth_service = new AuthService($dp);
+        /** @var AuthService $auth_service */
+        $auth_service = $this->container->get(AuthService::class);
         $auth = $auth_service->authUser($user->getId(), $token_type);
 
         if (!$auth) {
@@ -119,7 +118,7 @@ class Auth extends AbstractApiController {
             ]);
         }
 
-        return new SuccessAuthResponse($auth);
+        return SuccessAuthResponse::createFromArray($auth);
     }
 
     /**
@@ -167,8 +166,10 @@ class Auth extends AbstractApiController {
      */
     public function logout()
     {
-        $dp = new DataProvider(Config::get('mysql.main'));
-        $auth_service = new AuthService($dp);
+        //$dp = new DataProvider(Config::get('mysql.main'));
+        //$auth_service = new AuthService($dp);
+        /** @var AuthService $auth_service */
+        $auth_service = $this->container->get(AuthService::class);
 
         $token = AuthService::getTokenFromHeaders($this->headers);
 

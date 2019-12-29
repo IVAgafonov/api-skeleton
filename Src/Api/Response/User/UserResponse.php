@@ -2,12 +2,12 @@
 
 namespace App\Api\Response\User;
 
-use App\Api\Response\AbstractResponse;
+use App\Api\Response\AbstractRootResponse;
 
 /**
  * @OA\Schema()
  */
-class UserResponse extends AbstractResponse
+class UserResponse extends AbstractRootResponse
 {
 
     /**

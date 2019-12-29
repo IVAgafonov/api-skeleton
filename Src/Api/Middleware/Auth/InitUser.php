@@ -6,7 +6,7 @@ use App\Api\Controller\AbstractApiController;
 use App\Api\Middleware\MiddlewareInterface;
 use App\Api\Response\Auth\ErrorAuthResponse;
 use App\Api\Response\ResponseInterface;
-use App\Entity\User\User;
+use DI\Container;
 use App\Service\Auth\AuthService;
 use App\Service\User\UserService;
 use App\System\Config\Config;
@@ -21,30 +21,35 @@ class InitUser implements MiddlewareInterface
 
     /**
      * @param AbstractApiController $controller
+     * @param Container $container
      * @param array $headers
      * @param array $params
      * @param array $extra_params
      * @return ResponseInterface|null
      * @throws \Exception
      */
-    public function __invoke(AbstractApiController &$controller, array $headers, array $params, array $extra_params = [])
+    public function __invoke(AbstractApiController &$controller, Container $container, array $headers, array $params, array $extra_params = [])
     {
         if (!empty($extra_params['allowed_groups'])) {
-            $dp = new DataProvider(Config::get('mysql.main'));
+            //$dp = new DataProvider(Config::get('mysql.main'));
 
-            $auth_service = new AuthService($dp);
-            $user_service = new UserService($dp);
+            //$auth_service = new AuthService($dp);
+            //$user_service = new UserService($dp);
+            /** @var AuthService $auth_service */
+            $auth_service = $container->get(AuthService::class);
+            /** @var UserService $user_service */
+            $user_service = $container->get(UserService::class);
 
             $token = AuthService::getTokenFromHeaders($headers);
 
             if (!$token) {
-                return new ErrorAuthResponse([
+                return ErrorAuthResponse::createFromArray([
                     'message' => 'Unauthorized'
                 ]);
             }
 
             if (!$auth_service->updateTokenExpireDate($token)) {
-                return new ErrorAuthResponse([
+                return ErrorAuthResponse::createFromArray([
                     'message' => 'Unauthorized [Invalid token]'
                 ]);
             }
@@ -52,7 +57,7 @@ class InitUser implements MiddlewareInterface
             $user_id = $auth_service->getUserIdByToken($token);
 
             if (!$user_id) {
-                return new ErrorAuthResponse([
+                return ErrorAuthResponse::createFromArray([
                     'message' => 'Unauthorized [User not found]'
                 ]);
             }
@@ -60,13 +65,13 @@ class InitUser implements MiddlewareInterface
             $user = $user_service->getUserById($user_id);
 
             if (!$user) {
-                return new ErrorAuthResponse([
+                return ErrorAuthResponse::createFromArray([
                     'message' => 'Unauthorized [Invalid user]'
                 ]);
             }
 
             if (empty(array_intersect($user->getGroups(), $extra_params['allowed_groups']))) {
-                return new ErrorAuthResponse([
+                return ErrorAuthResponse::createFromArray([
                     'message' => 'Unauthorized [Group not allowed]'
                 ]);
             }

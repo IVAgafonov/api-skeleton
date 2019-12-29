@@ -3,6 +3,8 @@
 namespace App\Api\Controller;
 
 use App\Entity\User\User;
+use App\Entity\Service\Service;
+use DI\Container;
 
 /**
  * Class AbstractController
@@ -45,82 +47,124 @@ abstract class AbstractApiController {
      */
     protected $user = null;
 
-	/**
-	 * @var string
-	 */
-	protected $method = 'GET';
+    /**
+     * @var Service|null
+     */
+    protected $service = null;
+
+    /**
+     * @var string
+     */
+    protected $method = 'GET';
 
     /**
      * @var array
      */
     protected $headers = [];
 
-	/**
-	 * @var array
-	 */
-	protected $params = [];
+    /**
+     * @var array
+     */
+    protected $params = [];
 
-	/**
-	 * @param string $method
-	 */
-	public function setMethod($method)
-	{
-		$this->method = $method;
-	}
+    /**
+     * @var Container
+     */
+    protected $container = null;
 
-	/**
-	 * @return string
-	 */
-	public function getMethod()
-	{
-		return $this->method;
-	}
+    /**
+     * @param Container $container
+     */
+    public function setContainer(Container $container)
+    {
+        $this->container = $container;
+    }
 
-	/**
-	 * Set uri params
-	 * @param array $params
-	 */
-	public function setParams(array $params) {
-		$this->params = $params;
-	}
+    /**
+     * @return Container
+     */
+    public function getContainer()
+    {
+        return $this->container;
+    }
 
-	/**
-	 * Get uri params
-	 * @return array
-	 */
-	public function getParams() {
-		return $this->params;
-	}
+    /**
+     * @param string $method
+     */
+    public function setMethod($method)
+    {
+        $this->method = $method;
+    }
 
-	/**
-	 * Set headers
-	 * @param array $headers
-	 */
-	public function setHeaders(array $headers) {
-		$this->headers = $headers;
-	}
+    /**
+     * @return string
+     */
+    public function getMethod()
+    {
+        return $this->method;
+    }
 
-	/**
-	 * Get headers
-	 * @return array
-	 */
-	public function getHeaders() {
-		return $this->headers;
-	}
+    /**
+     * Set uri params
+     * @param array $params
+     */
+    public function setParams(array $params) {
+        $this->params = $params;
+    }
 
-	/**
-	 * Set User
-	 * @param User $user
-	 */
-	public function setUser(User $user) {
-		$this->user = $user;
-	}
+    /**
+     * Get uri params
+     * @return array
+     */
+    public function getParams() {
+        return $this->params;
+    }
 
-	/**
-	 * Get User
-	 * @return User
-	 */
-	public function getUser() {
-		return $this->user;
-	}
+    /**
+     * Set headers
+     * @param array $headers
+     */
+    public function setHeaders(array $headers) {
+        $this->headers = $headers;
+    }
+
+    /**
+     * Get headers
+     * @return array
+     */
+    public function getHeaders() {
+        return $this->headers;
+    }
+
+    /**
+     * Set User
+     * @param User $user
+     */
+    public function setUser(User $user) {
+        $this->user = $user;
+    }
+
+    /**
+     * Get User
+     * @return User
+     */
+    public function getUser() {
+        return $this->user;
+    }
+
+    /**
+     * Set Service
+     * @param Service $service
+     */
+    public function setService(Service $service) {
+        $this->service = $service;
+    }
+
+    /**
+     * Get Service
+     * @return Service
+     */
+    public function getService() {
+        return $this->service;
+    }
 }

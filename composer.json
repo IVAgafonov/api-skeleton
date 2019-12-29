@@ -16,7 +16,8 @@
         "zircote/swagger-php": "^3.0",
         "hellogerard/jobby": "^3.2",
         "psr/log": "^1.0",
-        "robmorgan/phinx": "0.10.*"
+        "robmorgan/phinx": "0.10.*",
+        "php-di/php-di": "6.0.*"
     },
     "require-dev": {
         "codeception/codeception": "^3.0",

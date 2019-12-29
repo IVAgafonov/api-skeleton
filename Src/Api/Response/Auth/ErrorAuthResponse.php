@@ -2,13 +2,18 @@
 
 namespace App\Api\Response\Auth;
 
-use App\Api\Response\AbstractResponse;
+use App\Api\Response\AbstractRootResponse;
 
 /**
  * @OA\Schema()
  */
-class ErrorAuthResponse extends AbstractResponse
+class ErrorAuthResponse extends AbstractRootResponse
 {
+
+    /**
+     * @var int
+     */
+    protected static $response_code = 401;
 
     /**
      * @OA\Property(example="Unauthorized")
@@ -16,14 +21,4 @@ class ErrorAuthResponse extends AbstractResponse
      * @var string
      */
     public $message;
-
-    /**
-     * ServerErrorResponse constructor.
-     * @param array $data
-     * @param int $response_code
-     */
-    public function __construct(array $data, int $response_code = 401)
-    {
-        parent::__construct($data, $response_code);
-    }
 }

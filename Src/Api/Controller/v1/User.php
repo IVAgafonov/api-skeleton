@@ -84,18 +84,17 @@ class User extends AbstractApiController {
      */
     public function register()
     {
-        $dp = new DataProvider(Config::get('mysql.main'));
-        $user_service = new UserService($dp);
+        //$dp = new DataProvider(Config::get('mysql.main'));
+        //$user_service = new UserService($dp);
+        /** @var UserService $user_service */
+        $user_service = $this->container->get(UserService::class);
 
         if ($response = UserValidator::validate($this->params, UserValidator::CREATE_USER)) {
             return $response;
         }
 
         if ($user_service->getUserByEmail($this->params['email'])) {
-            return new ClientErrorResponse([
-                'field' => 'email',
-                'message' => 'User with this email already exists'
-            ]);
+            return new ClientErrorResponse('email', 'User with this email already exists');
         }
 
         $user = $user_service->createUser([
@@ -105,13 +104,11 @@ class User extends AbstractApiController {
         ]);
 
         if (!$user) {
-            return new ClientErrorResponse([
-                'field' => "email",
-                'message' => "Can't create new user. Please, try later"
-            ]);
+            return new ClientErrorResponse("email", "Can't create new user. Please, try later");
         }
 
-        $auth_service = new AuthService($dp);
+        //$auth_service = new AuthService($dp);
+        $auth_service = $this->container->get(AuthService::class);
         $auth = $auth_service->authUser($user->getId());
 
         if (!$auth) {
@@ -120,7 +117,7 @@ class User extends AbstractApiController {
             ]);
         }
 
-        return new SuccessAuthResponse($auth);
+        return SuccessAuthResponse::createFromArray($auth);
     }
 
     /**
@@ -183,9 +180,10 @@ class User extends AbstractApiController {
      */
     public function update()
     {
-        $dp = new DataProvider(Config::get('mysql.main'));
-        $user_service = new UserService($dp);
-
+        //$dp = new DataProvider(Config::get('mysql.main'));
+        //$user_service = new UserService($dp);
+        /** @var UserService $user_service */
+        $user_service = $this->container->get(UserService::class);
         if ($response = UserValidator::validate($this->params, UserValidator::UPDATE_USER)) {
             return $response;
         }
@@ -194,7 +192,7 @@ class User extends AbstractApiController {
 
         $user_service->saveUser($this->getUser(), ['name']);
 
-        return new UserResponse($this->getUser()->toArray());
+        return UserResponse::createFromArray($this->getUser()->toArray());
     }
 
     /**
@@ -236,6 +234,6 @@ class User extends AbstractApiController {
 */
     public function get()
     {
-        return new UserResponse($this->getUser()->toArray());
+        return UserResponse::createFromArray($this->getUser()->toArray());
     }
 }

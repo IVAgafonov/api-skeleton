@@ -5,6 +5,16 @@ namespace App\System\DataProvider\Mysql;
 interface DataProviderInterface {
 
     /**
+     * @return \PDO
+     */
+    public function getPdo();
+
+    /**
+     * @return string
+     */
+    public function getDb();
+
+    /**
      * Get objects by sql query
      *
      * @param string $query  Sql query

@@ -2,13 +2,18 @@
 
 namespace App\Api\Response\Error;
 
-use App\Api\Response\AbstractResponse;
+use App\Api\Response\AbstractRootResponse;
 
 /**
  * @OA\Schema()
  */
-class ClientErrorResponse extends AbstractResponse
+class ClientErrorResponse extends AbstractRootResponse
 {
+
+    /**
+     * @var int
+     */
+    protected static $response_code = 400;
 
     /**
      * @OA\Property(example="field_name")
@@ -25,12 +30,15 @@ class ClientErrorResponse extends AbstractResponse
     public $message;
 
     /**
-     * ServerErrorResponse constructor.
-     * @param array $data
+     * ClientErrorResponse constructor.
+     * @param string $field
+     * @param string $message
      * @param int $response_code
      */
-    public function __construct(array $data, int $response_code = 400)
+    public function __construct(string $field, string $message, int $response_code = 400)
     {
-        parent::__construct($data, $response_code);
+        $this->field = $field;
+        $this->message = $message;
+        $this->setResponseCode($response_code);
     }
 }
