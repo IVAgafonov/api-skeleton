@@ -72,7 +72,7 @@ class App
             }
             */
         });
-        \App\System\Config\Config::init();
+        Config::init();
         static::getContainer();
     }
 
