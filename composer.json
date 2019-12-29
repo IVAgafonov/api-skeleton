@@ -25,7 +25,7 @@
     },
     "scripts": {
         "migrate": "./vendor/bin/phinx migrate -e production",
-        "docs": "./vendor/bin/openapi -o ./docs ./Src/Api/",
+        "docs": "./vendor/bin/openapi -o ./docs ./Src/Api/ ./Src/Entity/",
         "test": "./vendor/bin/codecept run"
     }
 }
