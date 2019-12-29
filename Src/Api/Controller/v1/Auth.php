@@ -8,6 +8,7 @@ use App\Api\Response\Auth\SuccessAuthResponse;
 use App\Api\Response\Error\ClientErrorResponse;
 use App\Api\Response\EmptyResponse;
 use App\Api\Response\Error\ServerErrorResponse;
+use App\Entity\Token\TokenType;
 use App\Service\Auth\AuthService;
 use App\Service\Crypt\CryptService;
 use App\Service\User\UserService;
@@ -36,7 +37,7 @@ class Auth extends AbstractApiController {
      *             properties={
      *                 @OA\Property(property="email", type="string", format="email"),
      *                 @OA\Property(property="password", type="string", format="password"),
-     *                 @OA\Property(property="permanent", type="bool"),
+     *                 @OA\Property(property="token_type", ref="#/components/schemas/TokenType"),
      *             },
      *             example={"email": "test@site.ru", "password": "654321", "permanent": true}
      *         )
@@ -94,8 +95,7 @@ class Auth extends AbstractApiController {
             return $response;
         }
 
-        $token_type =
-            (!empty($this->params['permanent']) ? AuthService::TOKEN_TYPE_PERMANENT : AuthService::TOKEN_TYPE_TEMPORARY);
+        $token_type = new TokenType($this->params['permanent']);
 
         $user = $user_service->getUserByEmail($this->params['email']);
 
@@ -110,15 +110,15 @@ class Auth extends AbstractApiController {
         //$auth_service = new AuthService($dp);
         /** @var AuthService $auth_service */
         $auth_service = $this->container->get(AuthService::class);
-        $auth = $auth_service->authUser($user->getId(), $token_type);
+        $auth = $auth_service->authUser($user, $token_type);
 
         if (!$auth) {
-            return new ErrorAuthResponse([
+            return ErrorAuthResponse::createFromArray([
                 'message' => "Unauthorized"
             ]);
         }
 
-        return SuccessAuthResponse::createFromArray($auth);
+        return $auth;
     }
 
     /**
