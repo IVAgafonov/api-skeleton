@@ -1,14 +1,20 @@
 language: php
+env:
+  - IMAGE_VERSION="v0.3.0"
 php:
   - 7.2
 services:
   - mysql
+  - docker
 before_install:
   - mysql -u root -e 'CREATE DATABASE IF NOT EXISTS app_main;'
-before_script:
+script:
   - composer install --no-interaction
   - composer docs
   - composer migrate
-  - php -S 127.0.0.1:8080 -t /home/travis/build/IVAgafonov/api-skeleton > /dev/null 2>&1 &
-script:
-  - composer test
+  - php -S 127.0.0.1:8080 -t /home/travis/build/IVAgafonov/api-skeleton/www > /dev/null 2>&1 &
+  - composer test || travis_terminate 1;
+after_script:
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+  - docker build -t igoradm90/skeleton-api:$IMAGE_VERSION .
+  - docker push igoradm90/skeleton-api:$IMAGE_VERSION

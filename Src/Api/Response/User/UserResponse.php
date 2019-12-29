@@ -32,7 +32,7 @@ class UserResponse extends AbstractRootResponse
     public $name;
 
     /**
-     * @OA\Property(type="array", @OA\Items(type="string", enum={"USER", "ADMIN"}), example={"USER"});
+     * @OA\Property(ref="#/components/schemas/UserGroups");
      *
      * @var string[]
      */

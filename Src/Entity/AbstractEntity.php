@@ -20,6 +20,20 @@ class AbstractEntity {
     public function toArray()
     {
         $values = get_object_vars($this);
+        foreach ($values as $field => $param) {
+            if ($param === null ||
+                is_array($param)) {
+                unset($values[$field]);
+                continue;
+            }
+            if ($param instanceof AbstractEnum) {
+                $values[$field] = $param->getValue();
+            }
+            if ($param instanceof AbstractSet) {
+                $values[$field] = $param->getValue();
+            }
+        }
+
         return $values;
     }
 }

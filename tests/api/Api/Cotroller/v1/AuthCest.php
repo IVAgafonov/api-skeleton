@@ -73,7 +73,7 @@ class AuthCest
         $I->sendPOST('/api/v1/auth/login', [
             'email' => $user_email,
             'password' => $password,
-            'permanent' => true
+            'token_type' => 'PERMANENT'
         ]);
 
         $I->seeResponseCodeIs(HttpCode::OK);

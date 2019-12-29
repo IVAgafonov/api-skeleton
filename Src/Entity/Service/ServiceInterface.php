@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Entity\User;
+namespace App\Entity\Service;
 
 use App\Entity\AbstractEntityInterface;
 
-interface UserInterface extends AbstractEntityInterface {
+interface ServiceInterface extends AbstractEntityInterface {
 
     /**
      * @return int
@@ -27,15 +27,4 @@ interface UserInterface extends AbstractEntityInterface {
      * @return $this
      */
     public function setName(string $name);
-
-    /**
-     * @return string
-     */
-    public function getEmail();
-
-    /**
-     * @param string $email
-     * @return $this
-     */
-    public function setEmail(string $email);
 }

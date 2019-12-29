@@ -27,7 +27,7 @@ class User extends AbstractEntity implements UserInterface {
     protected $password;
 
     /**
-     * @var array
+     * @var UserGroups
      */
     protected $groups;
 
@@ -41,6 +41,16 @@ class User extends AbstractEntity implements UserInterface {
      */
     protected $delete_date;
 
+    public function __construct(array $data = [])
+    {
+        if (!empty($data['groups'])) {
+            $data['groups'] = new UserGroups(explode(",", $data['groups']));
+        } else {
+            $data['groups'] = (new UserGroups([]))->add(UserGroups::USER);
+        }
+        parent::__construct($data);
+    }
+
     /**
      * @return int
      */
@@ -51,10 +61,14 @@ class User extends AbstractEntity implements UserInterface {
 
     /**
      * @param int $id
-     * @return $this
+     * @return $this|UserInterface
+     * @throws \Exception
      */
     public function setId(int $id)
     {
+        if ($this->getId()) {
+            throw new \Exception("Changing id is forbidden");
+        }
         $this->id = $id;
         return $this;
     }
@@ -115,7 +129,7 @@ class User extends AbstractEntity implements UserInterface {
     }
 
     /**
-     * @return array
+     * @return UserGroups
      */
     public function getGroups()
     {
@@ -123,13 +137,13 @@ class User extends AbstractEntity implements UserInterface {
     }
 
     /**
-     * @param array $groups
+     * @param UserGroups $groups
      * @return $this
      * @throws \Exception
      */
-    public function setGroups(array $groups)
+    public function setGroups(UserGroups $groups)
     {
-        $this->groups = UserGroups::validate($groups);
+        $this->groups = $groups;
         return $this;
     }
 
@@ -168,6 +182,4 @@ class User extends AbstractEntity implements UserInterface {
         $this->delete_date = $delete_date;
         return $this;
     }
-
-
 }

@@ -2,6 +2,7 @@
 
 require_once __DIR__.'/vendor/autoload.php';
 
+\App\System\App\App::init();
 \App\System\Config\Config::init();
 
 /** @var \App\System\DataProvider\Mysql\DataProviderInterface $db */
