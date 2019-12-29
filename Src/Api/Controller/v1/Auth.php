@@ -95,6 +95,9 @@ class Auth extends AbstractApiController {
             return $response;
         }
 
+        if (!empty($this->params['token_type'])) {
+            $this->params['token_type'] = TokenType::TEMPORARY;
+        }
         $token_type = new TokenType($this->params['token_type']);
 
         $user = $user_service->getUserByEmail($this->params['email']);
