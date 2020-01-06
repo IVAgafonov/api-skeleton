@@ -4,19 +4,13 @@ namespace App\Api\Controller\v1;
 
 use App\Api\Controller\AbstractApiController;
 use App\Api\Response\Auth\ErrorAuthResponse;
-use App\Api\Response\Auth\SuccessAuthResponse;
 use App\Api\Response\Error\ClientErrorResponse;
 use App\Api\Response\EmptyResponse;
-use App\Api\Response\Error\ServerErrorResponse;
 use App\Entity\Token\TokenType;
 use App\Service\Auth\AuthService;
 use App\Service\Crypt\CryptService;
 use App\Service\User\UserService;
-use App\System\Config\Config;
-use App\System\DataProvider\Mysql\DataProvider;
-use App\System\DataProvider\Mysql\DataProviderInterface;
 use App\Validator\Auth\AuthValidator;
-use App\Validator\User\UserValidator;
 
 /**
  * Class Auth
@@ -54,7 +48,7 @@ class Auth extends AbstractApiController {
      *     ),
      *     @OA\Response(
      *         response=400,
-     *         description="Server error",
+     *         description="Client error",
      *         @OA\JsonContent(
      *              type="object",
      *              @OA\Property(property="timestamp", type="integer", example="1563707216"),
@@ -64,7 +58,7 @@ class Auth extends AbstractApiController {
      *     ),
      *     @OA\Response(
      *         response=401,
-     *         description="Server error",
+     *         description="Auth error",
      *         @OA\JsonContent(
      *              type="object",
      *              @OA\Property(property="timestamp", type="integer", example="1563707216"),
@@ -86,8 +80,6 @@ class Auth extends AbstractApiController {
      */
     public function login()
     {
-        //$dp = $this->container->get(DataProviderInterface::class);
-        //$user_service = new UserService($dp);
         /** @var UserService $user_service */
         $user_service = $this->container->get(UserService::class);
 
@@ -110,7 +102,6 @@ class Auth extends AbstractApiController {
             return new ClientErrorResponse("password", "Invalid password");
         }
 
-        //$auth_service = new AuthService($dp);
         /** @var AuthService $auth_service */
         $auth_service = $this->container->get(AuthService::class);
         $auth = $auth_service->authUser($user, $token_type);
@@ -147,7 +138,7 @@ class Auth extends AbstractApiController {
      *     ),
      *     @OA\Response(
      *         response=401,
-     *         description="Server error",
+     *         description="Auth error",
      *         @OA\JsonContent(
      *              type="object",
      *              @OA\Property(property="timestamp", type="integer", example="1563707216"),
@@ -169,8 +160,6 @@ class Auth extends AbstractApiController {
      */
     public function logout()
     {
-        //$dp = new DataProvider(Config::get('mysql.main'));
-        //$auth_service = new AuthService($dp);
         /** @var AuthService $auth_service */
         $auth_service = $this->container->get(AuthService::class);
 
