@@ -33,7 +33,7 @@ class Auth extends AbstractApiController {
      *                 @OA\Property(property="password", type="string", format="password"),
      *                 @OA\Property(property="token_type", ref="#/components/schemas/TokenType"),
      *             },
-     *             example={"email": "test@site.ru", "password": "654321", "permanent": true}
+     *             example={"email": "test@site.ru", "password": "654321", "token_type": "TEMPORARY"}
      *         )
      *     ),
      *     @OA\Response(

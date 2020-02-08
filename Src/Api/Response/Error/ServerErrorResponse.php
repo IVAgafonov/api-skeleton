@@ -16,9 +16,9 @@ class ServerErrorResponse extends AbstractRootResponse
     protected static $response_code = 500;
 
     /**
-     * @OA\Property(example="Server mafe a boo boo")
+     * @OA\Property(example="Server made a boo boo")
      *
-     * @var string
+     * @var string 
      */
     public $message;
 
