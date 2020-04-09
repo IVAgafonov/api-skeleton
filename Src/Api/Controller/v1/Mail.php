@@ -7,6 +7,7 @@ use App\Api\Response\EmptyResponse;
 use App\Api\Response\Error\ClientErrorResponse;
 use App\Api\Response\Mail\MailItem;
 use App\Api\Response\Mail\MailList;
+use App\Service\Mail\EmailService;
 use App\Service\Mail\MailService;
 use App\Service\User\UserService;
 
@@ -23,6 +24,18 @@ class Mail extends AbstractApiController {
      *     security={{"TokenAuth":{"USER"}}},
      *     @OA\Parameter(
      *         name="page",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="int")
+     *     ),
+     *     @OA\Parameter(
+     *         name="count",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="int")
+     *     ),
+     *     @OA\Parameter(
+     *         name="only_important",
      *         in="query",
      *         required=false,
      *         @OA\Schema(type="int")
@@ -71,13 +84,217 @@ class Mail extends AbstractApiController {
      */
     public function inbox()
     {
-        $page = $this->params['page'] ?? 1;
-        $count = 5;
+        $page = (int) ($this->params['page'] ?? 1);
+        $count = (int) ($this->params['count'] ?? 10);
+        $only_important = (bool) ($this->params['only_important'] ?? false);
+
+        /** @var EmailService $email_service */
+        $email_service = $this->container->get(EmailService::class);
+
+        $email_list_array = array_map(
+            function ($e) {
+                $e['message'] = mb_substr(str_replace("\n", " ", $e['message']), 0, 128);
+                return $e;
+            },
+            $email_service->getInbox($this->getUser()->getId(), $page, $count, $only_important)
+        );
 
         $mail_list = array_map(function($m) {
             return MailItem::createFromArray($m);
-        }, MailService::getMailList($this->getUser()->getEmail(), $count, $page));
-        return MailList::createFromArray(['count' => count($mail_list), 'items' => $mail_list]);
+        }, $email_list_array);
+        return MailList::createFromArray([
+            'count_inbox' => $email_service->getInboxCount($this->getUser()->getId()) ,
+            'count_outbox' => $email_service->getOutboxCount($this->getUser()->getId()) ,
+            'count_deleted' => $email_service->getDeletedCount($this->getUser()->getId()),
+            'count_unread' => $email_service->getInboxUnreadCount($this->getUser()->getId()),
+            'items' => $mail_list
+        ]);
+    }
+
+    /**
+     * @OA\Get(path="/api/v1/mail/ountbox",
+     *     tags={"Mail"},
+     *     summary="Outbox email list",
+     *     security={{"TokenAuth":{"USER"}}},
+     *     @OA\Parameter(
+     *         name="page",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="int")
+     *     ),
+     *     @OA\Parameter(
+     *         name="count",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="int")
+     *     ),
+     *     @OA\Parameter(
+     *         name="only_important",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="int")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Response success",
+     *         @OA\JsonContent(
+     *              type="object",
+     *              @OA\Property(property="timestamp", type="integer", example="1563707216"),
+     *              @OA\Property(property="response_type", type="string", example="MailList"),
+     *              @OA\Property(property="response", ref="#/components/schemas/MailList")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Client error",
+     *         @OA\JsonContent(
+     *              type="object",
+     *              @OA\Property(property="timestamp", type="integer", example="1563707216"),
+     *              @OA\Property(property="response_type", type="string", example="ClientErrorResponse"),
+     *              @OA\Property(property="response", ref="#/components/schemas/ClientErrorResponse")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Client auth error",
+     *         @OA\JsonContent(
+     *              type="object",
+     *              @OA\Property(property="timestamp", type="integer", example="1563707216"),
+     *              @OA\Property(property="response_type", type="string", example="ErrorAuthResponse"),
+     *              @OA\Property(property="response", ref="#/components/schemas/ErrorAuthResponse")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Server error",
+     *         @OA\JsonContent(
+     *              type="object",
+     *              @OA\Property(property="timestamp", type="integer", example="1563707216"),
+     *              @OA\Property(property="response_type", type="string", example="ServerErrorResponse"),
+     *              @OA\Property(property="response", ref="#/components/schemas/ServerErrorResponse")
+     *         )
+     *     )
+     * )
+     */
+    public function outbox()
+    {
+        $page = (int) ($this->params['page'] ?? 1);
+        $count = (int) ($this->params['count'] ?? 10);
+
+        /** @var EmailService $email_service */
+        $email_service = $this->container->get(EmailService::class);
+
+        $email_list_array = array_map(
+            function ($e) {
+                $e['message'] = mb_substr(str_replace("\n", " ", $e['message']), 0, 128);
+                return $e;
+            },
+            $email_service->getOutbox($this->getUser()->getId(), $page, $count)
+        );
+
+        $mail_list = array_map(function($m) {
+            return MailItem::createFromArray($m);
+        }, $email_list_array);
+        return MailList::createFromArray([
+            'count_inbox' => $email_service->getInboxCount($this->getUser()->getId()) ,
+            'count_outbox' => $email_service->getOutboxCount($this->getUser()->getId()) ,
+            'count_deleted' => $email_service->getDeletedCount($this->getUser()->getId()),
+            'count_unread' => $email_service->getInboxUnreadCount($this->getUser()->getId()),
+            'items' => $mail_list
+        ]);
+    }
+
+    /**
+     * @OA\Get(path="/api/v1/mail/deleted",
+     *     tags={"Mail"},
+     *     summary="Deleted email list",
+     *     security={{"TokenAuth":{"USER"}}},
+     *     @OA\Parameter(
+     *         name="page",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="int")
+     *     ),
+     *     @OA\Parameter(
+     *         name="count",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="int")
+     *     ),
+     *     @OA\Parameter(
+     *         name="only_important",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="int")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Response success",
+     *         @OA\JsonContent(
+     *              type="object",
+     *              @OA\Property(property="timestamp", type="integer", example="1563707216"),
+     *              @OA\Property(property="response_type", type="string", example="MailList"),
+     *              @OA\Property(property="response", ref="#/components/schemas/MailList")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Client error",
+     *         @OA\JsonContent(
+     *              type="object",
+     *              @OA\Property(property="timestamp", type="integer", example="1563707216"),
+     *              @OA\Property(property="response_type", type="string", example="ClientErrorResponse"),
+     *              @OA\Property(property="response", ref="#/components/schemas/ClientErrorResponse")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Client auth error",
+     *         @OA\JsonContent(
+     *              type="object",
+     *              @OA\Property(property="timestamp", type="integer", example="1563707216"),
+     *              @OA\Property(property="response_type", type="string", example="ErrorAuthResponse"),
+     *              @OA\Property(property="response", ref="#/components/schemas/ErrorAuthResponse")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Server error",
+     *         @OA\JsonContent(
+     *              type="object",
+     *              @OA\Property(property="timestamp", type="integer", example="1563707216"),
+     *              @OA\Property(property="response_type", type="string", example="ServerErrorResponse"),
+     *              @OA\Property(property="response", ref="#/components/schemas/ServerErrorResponse")
+     *         )
+     *     )
+     * )
+     */
+    public function deleted()
+    {
+        $page = (int) ($this->params['page'] ?? 1);
+        $count = (int) ($this->params['count'] ?? 10);
+
+        /** @var EmailService $email_service */
+        $email_service = $this->container->get(EmailService::class);
+
+        $email_list_array = array_map(
+            function ($e) {
+                $e['message'] = mb_substr(str_replace("\n", " ", $e['message']), 0, 128);
+                return $e;
+            },
+            $email_service->getDeleted($this->getUser()->getId(), $page, $count)
+        );
+
+        $mail_list = array_map(function($m) {
+            return MailItem::createFromArray($m);
+        }, $email_list_array);
+        return MailList::createFromArray([
+            'count_inbox' => $email_service->getInboxCount($this->getUser()->getId()) ,
+            'count_outbox' => $email_service->getOutboxCount($this->getUser()->getId()) ,
+            'count_deleted' => $email_service->getDeletedCount($this->getUser()->getId()),
+            'count_unread' => $email_service->getInboxUnreadCount($this->getUser()->getId()),
+            'items' => $mail_list
+        ]);
     }
 
     /**
@@ -86,10 +303,13 @@ class Mail extends AbstractApiController {
      *     summary="Inbox email list",
      *     security={{"TokenAuth":{"USER"}}},
      *     @OA\Parameter(
-     *         name="mail_id",
+     *         description="Email id",
      *         in="path",
+     *         name="mail_id",
      *         required=true,
-     *         @OA\Schema(type="int")
+     *         @OA\Schema(
+     *           type="integer"
+     *         )
      *     ),
      *     @OA\Response(
      *         response=200,
@@ -135,22 +355,25 @@ class Mail extends AbstractApiController {
      */
     public function get()
     {
-        $id = $this->params['mail_id'] ?? 0;
+        $email_id = $this->params['mail_id'] ?? 0;
 
-        if (!$id) {
+        if (!$email_id) {
             return new ClientErrorResponse('mail_id', 'Empty mail id');
         }
 
-        $mail_list =  MailService::getMailList($this->getUser()->getEmail(), -1);
+        $email_service = $this->container->get(EmailService::class);
 
-        foreach ($mail_list as $mail) {
-            if ($mail['id'] == $id) {
-                MailService::setEmailRead($id);
-                return MailItem::createFromArray($mail);
-            }
+        if (!$email_service->checkEmailsByIds([$email_id], $this->getUser()->getId())) {
+            return new ClientErrorResponse('email_id', 'Email not found');
         }
 
-        return new ClientErrorResponse('mail_id', 'Mail not found', 404);
+        $email = $email_service->getEmailById($email_id);
+
+        if (!$email) {
+            return new ClientErrorResponse('mail_id', 'Mail not found', 404);
+        }
+
+        return MailItem::createFromArray($email);
     }
 
     /**
@@ -166,9 +389,9 @@ class Mail extends AbstractApiController {
      *             properties={
      *                 @OA\Property(property="email", type="string"),
      *                 @OA\Property(property="subject", type="string"),
-     *                 @OA\Property(property="text", type="string"),
+     *                 @OA\Property(property="message", type="string"),
      *             },
-     *             example={"email" = "test@host.com", "subject" = "test mail","text" = "test mail text"}
+     *             example={"email" = "test@host.com", "subject" = "test mail", "message" = "test mail text"}
      *         )
      *     ),
      *     @OA\Response(
@@ -220,13 +443,13 @@ class Mail extends AbstractApiController {
             return new ClientErrorResponse('email', 'Invalid email format');
         }
         $subject = $this->params['subject'] ?? "";
-        $text = $this->params['text'] ?? "";
+        $message = $this->params['message'] ?? "";
 
         if (mb_strlen($subject) < 3 || mb_strlen($subject) > 50) {
             return new ClientErrorResponse('subject', 'Invalid subject');
         }
-        if (mb_strlen($subject) < 3 || mb_strlen($subject) > 512) {
-            return new ClientErrorResponse('text', 'Invalid text');
+        if (mb_strlen($message) < 3 || mb_strlen($message) > 512) {
+            return new ClientErrorResponse('message', 'Invalid message');
         }
 
         /** @var UserService $user_service */
@@ -236,7 +459,91 @@ class Mail extends AbstractApiController {
             return new ClientErrorResponse('email', 'Recipient does not exist');
         }
 
-        MailService::addEmail($email, $this->getUser()->getEmail(), $subject, $text);
+        /** @var EmailService $email_service */
+        $email_service = $this->getContainer()->get(EmailService::class);
+        $email_service->createEmail($this->getUser()->getId(), $user_to_send->getId(), $subject, $message);
+
+        return new EmptyResponse();
+    }
+
+
+    /**
+     * @OA\Post(path="/api/v1/mail/important",
+     *     tags={"Mail"},
+     *     summary="Set/unset email as important",
+     *     security={{"TokenAuth":{"USER"}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             type="object",
+     *             required={"email_id", "important"},
+     *             properties={
+     *                 @OA\Property(property="email_id", type="int"),
+     *                 @OA\Property(property="important", type="int"),
+     *             },
+     *             example={"email_id" = 1, "important" = 1}
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Response success",
+     *         @OA\JsonContent(
+     *              type="object",
+     *              @OA\Property(property="timestamp", type="integer", example="1563707216"),
+     *              @OA\Property(property="response_type", type="string", example="EmptyResponse"),
+     *              @OA\Property(property="response", ref="#/components/schemas/EmptyResponse")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Client error",
+     *         @OA\JsonContent(
+     *              type="object",
+     *              @OA\Property(property="timestamp", type="integer", example="1563707216"),
+     *              @OA\Property(property="response_type", type="string", example="ClientErrorResponse"),
+     *              @OA\Property(property="response", ref="#/components/schemas/ClientErrorResponse")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Client auth error",
+     *         @OA\JsonContent(
+     *              type="object",
+     *              @OA\Property(property="timestamp", type="integer", example="1563707216"),
+     *              @OA\Property(property="response_type", type="string", example="ErrorAuthResponse"),
+     *              @OA\Property(property="response", ref="#/components/schemas/ErrorAuthResponse")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Server error",
+     *         @OA\JsonContent(
+     *              type="object",
+     *              @OA\Property(property="timestamp", type="integer", example="1563707216"),
+     *              @OA\Property(property="response_type", type="string", example="ServerErrorResponse"),
+     *              @OA\Property(property="response", ref="#/components/schemas/ServerErrorResponse")
+     *         )
+     *     )
+     * )
+     */
+    public function important()
+    {
+        $email_id = (int) ($this->params['email_id'] ?? 0);
+        if (!$email_id) {
+            return new ClientErrorResponse('email_id', 'Empty email id');
+        }
+        $is_important = (int) ($this->params['important'] ?? 0);
+
+        /** @var EmailService $email_service */
+        $email_service = $this->getContainer()->get(EmailService::class);
+
+        if (!$email_service->checkEmailsByIds([$email_id], $this->getUser()->getId())) {
+            return new ClientErrorResponse('email_id', 'Email not found');
+        }
+
+        $email = $email_service->getEmailById($email_id);
+        $email['is_important'] = $is_important;
+        $email_service->saveEmail($email);
 
         return new EmptyResponse();
     }
@@ -302,7 +609,18 @@ class Mail extends AbstractApiController {
     public function delete()
     {
         $ids = $this->params['ids'] ?? [];
-        MailService::deleteMails($this->getUser()->getEmail(), $ids);
+
+        $ids = array_map(function ($id) { return (int) $id; }, $ids);
+
+        /** @var EmailService $email_service */
+        $email_service = $this->container->get(EmailService::class);
+
+        if (count($ids) !== count($email_service->checkEmailsByIds($ids, $this->getUser()->getId()))) {
+            return new ClientErrorResponse('email_id', 'Email not found');
+        }
+
+        $email_service->deleteByIds($ids);
+
         return new EmptyResponse();
     }
 }

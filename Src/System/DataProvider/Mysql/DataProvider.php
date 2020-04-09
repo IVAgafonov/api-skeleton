@@ -94,12 +94,13 @@ class DataProvider implements DataProviderInterface
      *
      * @param string $query Sql query
      * @param string $object Object name
+     * @param array  $params Sql query
      *
      * @return array|null
      */
-    public function getObjects($query, $object)
+    public function getObjects($query, $object, $params = [])
     {
-        $this->statement = $this->getPdo()->query($query);
+        $this->getStatement($query, $params);
         if ($this->statement) {
             $this->statement->setFetchMode(\PDO::FETCH_CLASS, $object);
             $objects = $this->statement->fetchAll();
@@ -107,7 +108,7 @@ class DataProvider implements DataProviderInterface
                 return $objects;
             }
         }
-        return null;
+        return [];
     }
 
     /**
@@ -115,11 +116,13 @@ class DataProvider implements DataProviderInterface
      *
      * @param string $query Sql query
      * @param string $object Object name
+     * @param array  $params Sql query
      *
      * @return array|null
      */
-    public function getObject($query, $object)
+    public function getObject($query, $object, $params = [])
     {
+        $this->getStatement($query, $params);
         $this->statement = $this->getPdo()->query($query);
         if ($this->statement) {
             $this->statement->setFetchMode(\PDO::FETCH_CLASS, $object);
@@ -132,48 +135,50 @@ class DataProvider implements DataProviderInterface
      * Get arrays by sql query
      *
      * @param string $query Sql query
+     * @param array  $params Sql query
      *
      * @return array|null
      */
-    public function getArrays($query)
+    public function getArrays($query, $params = [])
     {
-        $this->statement = $this->getPdo()->query($query);
-
+        $this->getStatement($query, $params);
         if ($this->statement) {
             $result = $this->statement->fetchAll(\PDO::FETCH_ASSOC);
             if ($result) {
                 return $result;
             }
         }
-        return null;
+        return [];
     }
 
     /**
      * Get array by sql query
      *
      * @param string $query Sql query
+     * @param array  $params Sql query
      *
      * @return array|null
      */
-    public function getArray($query)
+    public function getArray($query, $params = [])
     {
-        $this->statement = $this->getPdo()->query($query);
+        $this->getStatement($query, $params);
         if ($this->statement) {
             return $this->statement->fetch(\PDO::FETCH_ASSOC);
         }
-        return null;
+        return [];
     }
 
     /**
      * Get array by sql query
      *
      * @param string $query Sql query
+     * @param array  $params Sql query
      *
      * @return array|null
      */
-    public function getValue($query)
+    public function getValue($query, $params = [])
     {
-        $this->statement = $this->getPdo()->query($query);
+        $this->getStatement($query, $params);
         if ($this->statement) {
             $value = $this->statement->fetch(\PDO::FETCH_BOTH);
             if (!empty($value[0])) {
@@ -187,16 +192,39 @@ class DataProvider implements DataProviderInterface
      * Execute sql query
      *
      * @param string $query Sql query
+     * @param array  $params Sql query
      *
      * @return int|null
      */
-    public function doQuery($query)
+    public function query($query, $params = [])
     {
-        $this->statement = $this->getPdo()->query($query);
+        $this->getStatement($query, $params);
         if ($this->statement && $this->statement->rowCount()) {
             return $this->statement->rowCount();
         }
         return null;
+    }
+
+    /**
+     * @param $query
+     * @param array $params
+     * @return bool|false|\PDOStatement
+     */
+    private function getStatement($query, $params = []) {
+        if (count($params)) {
+            $this->statement = $this->pdo->prepare($query);
+            foreach ($params as $name => $param) {
+                if (in_array($name, [':offset', ':limit'])) {
+                    $this->statement->bindValue($name, $param, \PDO::PARAM_INT);
+                } else {
+                    $this->statement->bindValue($name, $param);
+                }
+            }
+            $this->statement->execute();
+        } else {
+            $this->statement = $this->getPdo()->query($query);
+        }
+        return $this->statement;
     }
 
     /**

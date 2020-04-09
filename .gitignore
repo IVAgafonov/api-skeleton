@@ -9,5 +9,5 @@ exchange
 !/.idea/codeStyleSettings.xml
 !/.idea/inspectionProfiles/profiles_settings.xml
 !/.idea/inspectionProfiles/seopult.xml
-/configs/*/\.*
+/configs/Local/*
 !.gitkeep

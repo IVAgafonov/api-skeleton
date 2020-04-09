@@ -19,56 +19,62 @@ interface DataProviderInterface {
      *
      * @param string $query  Sql query
      * @param string $object Object name
+     * @param array  $params Sql query
      *
      * @return array|bool
      */
-    public function getObjects($query, $object);
+    public function getObjects($query, $object, $params);
 
     /**
      * Get object by sql query
      *
      * @param string $query  Sql query
      * @param string $object Object name
+     * @param array  $params Sql query
      *
      * @return array|bool
      */
-    public function getObject($query, $object);
+    public function getObject($query, $object, $params);
 
     /**
      * Get arrays by sql query
      *
      * @param string $query Sql query
+     * @param array  $params Sql query
      *
      * @return array|bool
      */
-    public function getArrays($query);
+    public function getArrays($query, $params);
 
     /**
      * Get array by sql query
      *
      * @param string $query Sql query
+     * @param array  $params Sql query
      *
      * @return array|bool
      */
-    public function getArray($query);
+    public function getArray($query, $params);
 
     /**
      * Get array by sql query
      *
      * @param string $query Sql query
+     * @param array  $params Sql query
      *
      * @return array|bool
      */
-    public function getValue($query);
+    public function getValue($query, $params);
 
     /**
      * Execute sql query
      *
      * @param string $query Sql query
+     * @param array  $params Sql query
      *
      * @return array|bool
      */
-    public function doQuery($query);
+    public function query($query, $params);
 
     /**
      * Quote string

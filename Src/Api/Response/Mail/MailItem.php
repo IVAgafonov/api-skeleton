@@ -36,14 +36,21 @@ class MailItem extends AbstractRootResponse
      *
      * @var string
      */
-    public $text;
+    public $message;
 
     /**
      * @OA\Property()
      *
      * @var boolean
      */
-    public $read;
+    public $is_opened;
+
+    /**
+     * @OA\Property()
+     *
+     * @var boolean
+     */
+    public $is_important;
 
     /**
      * @OA\Property()
@@ -51,4 +58,13 @@ class MailItem extends AbstractRootResponse
      * @var string
      */
     public $date;
+
+    public static function createFromArray(array $array)
+    {
+        $array['id'] = (int) $array['id'];
+        $array['is_opened'] = (bool) $array['is_opened'];
+        $array['is_important'] = (bool) $array['is_important'];
+        $array['date'] = $array['create_date'];
+        return parent::createFromArray($array);
+    }
 }

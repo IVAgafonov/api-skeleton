@@ -55,7 +55,7 @@ class AuthService {
             'expire_date' => $expire_date
         ]);
 
-        $this->dp->doQuery("INSERT INTO `app_users_auth_tokens` ".
+        $this->dp->query("INSERT INTO `app_users_auth_tokens` ".
             "(token, user_id, expire_date, type) ".
             "VALUES ".
             "(".$this->dp->quote($successAuthResponse->token).", ".
@@ -82,12 +82,12 @@ class AuthService {
 
         if ($auth) {
             if ($auth)
-            $this->dp->doQuery("UPDATE `app_users_auth_tokens` SET `expire_date` = ".$this->dp->quote($expire_date)." ".
+            $this->dp->query("UPDATE `app_users_auth_tokens` SET `expire_date` = ".$this->dp->quote($expire_date)." ".
                 "WHERE `token` = ".$this->dp->quote($token));
             return true;
         }
 
-        $this->dp->doQuery("DELETE FROM `app_users_auth_tokens` ".
+        $this->dp->query("DELETE FROM `app_users_auth_tokens` ".
                 "WHERE `token` = ".$this->dp->quote($token));
 
         return false;
@@ -105,11 +105,11 @@ class AuthService {
         if ($all_devices) {
             $user_id = $this->getUserIdByToken($token);
             if ($user_id) {
-                $this->dp->doQuery("DELETE FROM `app_users_auth_tokens` ".
+                $this->dp->query("DELETE FROM `app_users_auth_tokens` ".
                     "WHERE `user_id` = ".$user_id);
             }
         } else {
-            $this->dp->doQuery("DELETE FROM `app_users_auth_tokens` ".
+            $this->dp->query("DELETE FROM `app_users_auth_tokens` ".
                 "WHERE `token` = ".$this->dp->quote($token)." ".
                 "AND (`expire_date` > ".$this->dp->quote(date("Y-m-d H:i:s"))." OR `type` = ".$this->dp->quote(TokenType::PERMANENT).")");
         }

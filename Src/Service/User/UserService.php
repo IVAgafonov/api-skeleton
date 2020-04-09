@@ -22,7 +22,7 @@ class UserService {
 
     public function createUser($email, $name, $password)
     {
-        $this->dp->doQuery("INSERT INTO `app_users` (`email`, `name`, `password`) ".
+        $this->dp->query("INSERT INTO `app_users` (`email`, `name`, `password`) ".
             "VALUES (".$this->dp->quote($email).", ".$this->dp->quote($name).", ".$this->dp->quote($password).")");
         $user_id = $this->dp->getLastInsertId();
         if ($user_id) {
@@ -49,7 +49,7 @@ class UserService {
             $duplicate_values[] = "`".$field."` = ".$this->dp->quote($param);
         }
 
-        $this->dp->doQuery("INSERT INTO `app_users` ".
+        $this->dp->query("INSERT INTO `app_users` ".
             "(".implode(",", $insert_params).") VALUES (".implode(",", $insert_values).") ".
             "ON DUPLICATE KEY UPDATE ".implode(",", $duplicate_values));
         if ($this->dp->getLastInsertId()) {
