@@ -162,7 +162,7 @@ class EmailService {
         if (empty($ids)) {
             throw new \Exception("Empty ids");
         }
-        return $this->dp->getArray(
+        return $this->dp->getArrays(
             "SELECT e.id FROM `app_emails` e ".
             "WHERE (e.recipient_user_id = :user_id OR e.sender_user_id = :user_id) AND ids IN (".implode(",", $ids).") ",
             [
