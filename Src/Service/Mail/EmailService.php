@@ -58,7 +58,7 @@ class EmailService {
                 "JOIN app_users u ON e.sender_user_id = u.id ".
                 "WHERE e.recipient_user_id = :user_id AND e.delete_date IS NULL AND e.type = :received ".
                 "AND is_important = :is_important ".
-                "LIMIT :offset, :limit",
+                "LIMIT :offset :limit",
                 [
                     ':user_id' => $user_id,
                     ':offset' => (--$page) * $count,
@@ -164,19 +164,16 @@ class EmailService {
         }
         return $this->dp->getArray(
             "SELECT e.id FROM `app_emails` e ".
-            "WHERE (e.recipient_user_id = :user_id OR e.sender_user_id = :user_id) AND ids IN (:ids) ",
+            "WHERE (e.recipient_user_id = :user_id OR e.sender_user_id = :user_id) AND ids IN (".implode(",", $ids).") ",
             [
-                ':user_id' => $user_id,
-                ':ids' => implode(", ", array_map(function ($m) {
-                    return (int) $m;
-                }, $ids))
+                ':user_id' => $user_id
             ]
         );
     }
 
     public function getInboxCount(int $user_id)
     {
-        return $this->dp->getValue(
+        return (int) $this->dp->getValue(
             "SELECT count(*) FROM `app_emails` e ".
             "WHERE e.recipient_user_id = :user_id AND e.delete_date IS NULL AND type = :received",
             [
@@ -188,7 +185,7 @@ class EmailService {
 
     public function getInboxUnreadCount(int $user_id)
     {
-        return $this->dp->getValue(
+        return (int) $this->dp->getValue(
             "SELECT count(*) FROM `app_emails` e ".
             "WHERE e.recipient_user_id = :user_id AND e.delete_date IS NULL AND is_opened = 0 AND type = :received",
             [
@@ -200,7 +197,7 @@ class EmailService {
 
     public function getOutboxCount(int $user_id)
     {
-        return $this->dp->getValue(
+        return (int) $this->dp->getValue(
             "SELECT count(*) FROM `app_emails` e ".
             "WHERE e.sender_user_id = :user_id AND e.delete_date IS NULL AND type = :sent",
             [
@@ -212,7 +209,7 @@ class EmailService {
 
     public function getDeletedCount(int $user_id)
     {
-        return $this->dp->getValue(
+        return (int) $this->dp->getValue(
             "SELECT count(*) FROM `app_emails` e ".
             "WHERE (e.recipient_user_id = :user_id OR e.sender_user_id = :user_id) AND e.delete_date IS NOT NULL",
             [
