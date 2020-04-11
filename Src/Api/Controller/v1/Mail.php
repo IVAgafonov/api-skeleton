@@ -112,7 +112,7 @@ class Mail extends AbstractApiController {
     }
 
     /**
-     * @OA\Get(path="/api/v1/mail/ountbox",
+     * @OA\Get(path="/api/v1/mail/outbox",
      *     tags={"Mail"},
      *     summary="Outbox email list",
      *     security={{"TokenAuth":{"USER"}}},
