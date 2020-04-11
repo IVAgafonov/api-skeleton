@@ -7,6 +7,6 @@ return [
         'user' => 'root',
         'password' => '',
         'host' => 'localhost',
-        'db' => 'app_main',
+        'db' => 'app_mail',
     ]
 ];
