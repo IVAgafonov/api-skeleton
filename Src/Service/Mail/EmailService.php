@@ -164,7 +164,7 @@ class EmailService {
         }
         return $this->dp->getArrays(
             "SELECT e.id FROM `app_emails` e ".
-            "WHERE (e.recipient_user_id = :user_id OR e.sender_user_id = :user_id) AND id IN (".implode(",", $ids).") ",
+            "WHERE (e.recipient_user_id = :user_id OR e.sender_user_id = :user_id) AND e.id IN (".implode(",", $ids).") ",
             [
                 ':user_id' => $user_id
             ]
@@ -222,8 +222,7 @@ class EmailService {
         $this->dp->query(
             "UPDATE `app_emails` ".
             "SET delete_date = :delete_date ".
-            "WHERE id IN (".implode(",", $ids).") ".
-            "AND (sender_user_id = :user_id OR recipient_user_id = :user_id)",
+            "WHERE id IN (".implode(",", $ids).")",
             [
                 ':delete_date' => date("Y-m-d H:i:s")
             ]
