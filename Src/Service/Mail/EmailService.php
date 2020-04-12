@@ -54,8 +54,9 @@ class EmailService {
     {
         if ($only_important) {
             return $this->dp->getArrays(
-                "SELECT e.*, u.email as sender FROM `app_emails` e ".
+                "SELECT e.*, u.email as sender, r.email as recipient  FROM `app_emails` e ".
                 "JOIN app_users u ON e.sender_user_id = u.id ".
+                "JOIN app_users r ON e.recipient_user_id = r.id ".
                 "WHERE e.recipient_user_id = :user_id AND e.delete_date IS NULL AND e.type = :received ".
                 "AND is_important = :is_important ".
                 "LIMIT :offset :limit",
@@ -69,8 +70,9 @@ class EmailService {
             );
         }
         return $this->dp->getArrays(
-            "SELECT e.*, u.email as sender FROM `app_emails` e ".
+            "SELECT e.*, u.email as sender, r.email as recipient FROM `app_emails` e ".
             "JOIN app_users u ON e.sender_user_id = u.id ".
+            "JOIN app_users r ON e.recipient_user_id = r.id ".
             "WHERE e.recipient_user_id = :user_id AND e.delete_date IS NULL AND e.type = :received ".
             "LIMIT :offset, :limit",
             [
@@ -85,8 +87,9 @@ class EmailService {
     public function getOutbox(int $user_id, int $page = 1, int $count = 10)
     {
         return $this->dp->getArrays(
-            "SELECT e.*, u.email as sender FROM `app_emails` e ".
+            "SELECT e.*, u.email as sender, r.email as recipient FROM `app_emails` e ".
             "JOIN app_users u ON e.sender_user_id = u.id ".
+            "JOIN app_users r ON e.recipient_user_id = r.id ".
             "WHERE e.recipient_user_id = :user_id AND e.delete_date IS NULL AND e.type = :received ".
             "LIMIT :offset, :limit",
             [
@@ -101,8 +104,9 @@ class EmailService {
     public function getDeleted(int $user_id, int $page = 1, int $count = 10)
     {
         return $this->dp->getArrays(
-            "SELECT e.*, u.email as sender FROM `app_emails` e ".
+            "SELECT e.*, u.email as sender, r.email as recipient FROM `app_emails` e ".
             "JOIN app_users u ON e.sender_user_id = u.id ".
+            "JOIN app_users r ON e.recipient_user_id = r.id ".
             "WHERE (e.recipient_user_id = :user_id OR e.sender_user_id = :user_id)AND e.delete_date IS NOT NULL ".
             "LIMIT :offset, :limit",
             [

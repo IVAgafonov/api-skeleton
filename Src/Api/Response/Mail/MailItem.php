@@ -32,6 +32,13 @@ class MailItem extends AbstractRootResponse
     public $sender;
 
     /**
+     * @OA\Property(example="test@test.com")
+     *
+     * @var string
+     */
+    public $recipient;
+
+    /**
      * @OA\Property(example="Hello friend! ...")
      *
      * @var string
