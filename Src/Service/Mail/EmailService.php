@@ -123,7 +123,7 @@ class EmailService {
             "SELECT e.*, u.email as sender, r.email as recipient FROM `app_emails` e ".
             "JOIN app_users u ON e.sender_user_id = u.id ".
             "JOIN app_users r ON e.recipient_user_id = r.id ".
-            "WHERE e.recipient_user_id = :user_id AND e.delete_date IS NULL AND e.id = :id",
+            "WHERE e.delete_date IS NULL AND e.id = :id",
             [
                 ':id' => $email_id
             ]

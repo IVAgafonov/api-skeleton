@@ -367,11 +367,8 @@ class Mail extends AbstractApiController {
             return new ClientErrorResponse('email_id', 'Email not found');
         }
 
+        $email_service->saveEmail(['id' => $email_id, 'is_opened' => 1]);
         $email = $email_service->getEmailById($email_id);
-
-        if (!$email) {
-            return new ClientErrorResponse('mail_id', 'Mail not found', 404);
-        }
 
         return MailItem::createFromArray($email);
     }
