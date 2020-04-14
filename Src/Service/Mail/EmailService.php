@@ -145,7 +145,7 @@ class EmailService {
         $params = [];
 
         foreach ($email as $field => $value) {
-            $params = $field." = ".$this->dp->quote($value);
+            $params[] = $field." = ".$this->dp->quote($value);
         }
 
         $this->dp->query(
