@@ -151,7 +151,7 @@ class EmailService {
         $this->dp->query(
             "UPDATE `app_emails` ".
             "SET ".implode($params)." ".
-            "WHERE id = :$id",
+            "WHERE id = :id",
             [
                 ':id' => $id
             ]
