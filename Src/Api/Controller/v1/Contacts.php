@@ -72,7 +72,7 @@ class Contacts extends AbstractApiController {
      *     )
      * )
      */
-    public function list()
+    public function get()
     {
         $filter = $this->params['filter'] ?? null;
 
