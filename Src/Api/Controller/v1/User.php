@@ -9,6 +9,7 @@ use App\Api\Response\User\UserResponse;
 use App\Entity\Token\TokenType;
 use App\Service\Auth\AuthService;
 use App\Service\Crypt\CryptService;
+use App\Service\Mail\EmailService;
 use App\Service\User\UserService;
 use App\Validator\User\UserValidator;
 
@@ -100,6 +101,15 @@ class User extends AbstractApiController {
         if (!$user) {
             return new ClientErrorResponse("email", "Can't create new user. Please, try later");
         }
+
+        /** @var EmailService $email_service */
+        $email_service = $this->getContainer()->get(EmailService::class);
+        $email_service->createEmail(
+            $user_service->getUserByEmail('admin@agafonov.me')->getId(),
+            $user->getId(),
+            'Thanks for registration',
+            "Hello! Your registration successfully completed! Please, delete this message after reading."
+        );
 
         /** @var AuthService $auth_service */
         $auth_service = $this->container->get(AuthService::class);

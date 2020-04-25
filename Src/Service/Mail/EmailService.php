@@ -232,4 +232,44 @@ class EmailService {
             ]
         );
     }
+
+    public function addContact(int $user_id, string $email, string $name = '')
+    {
+        $this->dp->query(
+            "INSERT IGNORE INTO `app_contacts` ".
+            "(user_id, email, name) VALUES (:user_id, :email, :name)",
+            [
+                ':user_id' => $user_id,
+                ':email' => $email,
+                ':name' => $name
+            ]
+        );
+    }
+
+    public function getContacts(int $user_id, $filter = null)
+    {
+        $params = [
+            ':user_id' => $user_id
+        ];
+        if ($filter) {
+            $params[':filter'] = "%".$filter."%";
+        }
+        return $this->dp->getArrays(
+            "SELECT * FROM `app_contacts` ".
+            "WHERE user_id = :user_id ".
+            ($filter ? "AND (email LIKE :filter OR name LIKE :filter) " : "").
+            "ORDER BY `email`, `name`",
+            $params
+        );
+    }
+
+    public function deleteContact(int $contact_id)
+    {
+        $this->dp->query(
+            "DELETE FROM `app_contacts` WHERE id = :id",
+            [
+                ':id' => $contact_id
+            ]
+        );
+    }
 }

@@ -2,7 +2,7 @@
 
 use Phinx\Migration\AbstractMigration;
 
-class CreateEmailTables extends AbstractMigration
+class CreateContactList extends AbstractMigration
 {
     /**
      * Change Method.
@@ -31,23 +31,14 @@ class CreateEmailTables extends AbstractMigration
      */
     public function change()
     {
-        $this->query("CREATE TABLE app_emails (
+        $this->query("CREATE TABLE app_contacts (
 `id` int(13) unsigned NOT NULL AUTO_INCREMENT,
-`sender_user_id` int(13) unsigned NOT NULL,
-`recipient_user_id` int(13) unsigned NOT NULL,
-`subject` varchar(255) NOT NULL,
-`message` varchar(8096) NOT NULL,
-`type` enum('SENT', 'RECEIVED') NOT NULL DEFAULT 'SENT',
-`create_date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-`delete_date` datetime DEFAULT null,
-`is_opened` tinyint(1) NOT NULL DEFAULT 0,
-`is_important` tinyint(1) NOT NULL DEFAULT 0,
+`user_id` int(13) unsigned NOT NULL,
+`email` varchar(255) NOT NULL,
+`name` varchar(255) NOT NULL,
 PRIMARY KEY (`id`),
-KEY (`sender_user_id`),
-KEY (`recipient_user_id`)
+UNIQUE KEY (`user_id`, `email`),
+KEY (`user_id`, `name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin");
-
-        $this->query("INSERT INTO `app_users` (name, email, password) ".
-            "VALUES ('Admin', 'admin@agafonov.me', md5('BDfUSFfS&e24'))");
     }
 }

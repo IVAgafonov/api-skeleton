@@ -460,6 +460,9 @@ class Mail extends AbstractApiController {
         $email_service = $this->getContainer()->get(EmailService::class);
         $email_service->createEmail($this->getUser()->getId(), $user_to_send->getId(), $subject, $message);
 
+        $email_service->addContact($this->getUser()->getId(), $user_to_send->getEmail(), $user_to_send->getName());
+        $email_service->addContact($user_to_send->getId(), $this->getUser()->getEmail(), $this->getUser()->getName());
+
         return new EmptyResponse();
     }
 
