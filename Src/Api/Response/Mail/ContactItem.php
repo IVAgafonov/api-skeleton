@@ -22,7 +22,7 @@ class ContactItem extends AbstractRootResponse
      *
      * @var string
      */
-    public $emailt;
+    public $email;
 
     /**
      * @OA\Property(example="Name Surname")
