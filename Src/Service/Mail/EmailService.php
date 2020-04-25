@@ -257,7 +257,7 @@ class EmailService {
         return $this->dp->getArrays(
             "SELECT * FROM `app_contacts` ".
             "WHERE user_id = :user_id ".
-            ($filter ? "AND (email LIKE :filter OR name LIKE :filter) " : "").
+            ($filter ? "AND (lower(email) LIKE lower(:filter) OR lower(name) LIKE lower(:filter)) " : "").
             "ORDER BY `email`, `name`",
             $params
         );
