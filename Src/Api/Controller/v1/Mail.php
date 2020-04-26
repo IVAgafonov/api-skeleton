@@ -10,6 +10,7 @@ use App\Api\Response\Mail\MailList;
 use App\Service\Mail\EmailService;
 use App\Service\Mail\MailService;
 use App\Service\User\UserService;
+use function DI\string;
 
 /**
  * Class Mail
@@ -39,6 +40,12 @@ class Mail extends AbstractApiController {
      *         in="query",
      *         required=false,
      *         @OA\Schema(type="int")
+     *     ),
+     *     @OA\Parameter(
+     *         name="filter",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="string")
      *     ),
      *     @OA\Response(
      *         response=200,
@@ -87,6 +94,7 @@ class Mail extends AbstractApiController {
         $page = (int) ($this->params['page'] ?? 1);
         $count = (int) ($this->params['count'] ?? 10);
         $only_important = (bool) ($this->params['only_important'] ?? false);
+        $filter = $this->params['filter'] ?? null;
 
         /** @var EmailService $email_service */
         $email_service = $this->container->get(EmailService::class);
@@ -96,15 +104,16 @@ class Mail extends AbstractApiController {
                 $e['message'] = mb_substr(str_replace("\n", " ", $e['message']), 0, 128);
                 return $e;
             },
-            $email_service->getInbox($this->getUser()->getId(), $page, $count, $only_important)
+            $email_service->getInbox($this->getUser()->getId(), $page, $count, $only_important, $filter)
         );
 
         $mail_list = array_map(function($m) {
             return MailItem::createFromArray($m);
         }, $email_list_array);
+
         return MailList::createFromArray([
-            'count_inbox' => $email_service->getInboxCount($this->getUser()->getId()) ,
-            'count_outbox' => $email_service->getOutboxCount($this->getUser()->getId()) ,
+            'count_inbox' => $email_service->getInboxCount($this->getUser()->getId(), $filter) ,
+            'count_outbox' => $email_service->getOutboxCount($this->getUser()->getId()),
             'count_deleted' => $email_service->getDeletedCount($this->getUser()->getId()),
             'count_unread' => $email_service->getInboxUnreadCount($this->getUser()->getId()),
             'items' => $mail_list
@@ -133,6 +142,12 @@ class Mail extends AbstractApiController {
      *         in="query",
      *         required=false,
      *         @OA\Schema(type="int")
+     *     ),
+     *     @OA\Parameter(
+     *         name="filter",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="string")
      *     ),
      *     @OA\Response(
      *         response=200,
@@ -180,6 +195,7 @@ class Mail extends AbstractApiController {
     {
         $page = (int) ($this->params['page'] ?? 1);
         $count = (int) ($this->params['count'] ?? 10);
+        $filter = $this->params['filter'] ?? null;
 
         /** @var EmailService $email_service */
         $email_service = $this->container->get(EmailService::class);
@@ -189,15 +205,16 @@ class Mail extends AbstractApiController {
                 $e['message'] = mb_substr(str_replace("\n", " ", $e['message']), 0, 128);
                 return $e;
             },
-            $email_service->getOutbox($this->getUser()->getId(), $page, $count)
+            $email_service->getOutbox($this->getUser()->getId(), $page, $count, $filter)
         );
 
         $mail_list = array_map(function($m) {
             return MailItem::createFromArray($m);
         }, $email_list_array);
+
         return MailList::createFromArray([
             'count_inbox' => $email_service->getInboxCount($this->getUser()->getId()) ,
-            'count_outbox' => $email_service->getOutboxCount($this->getUser()->getId()) ,
+            'count_outbox' => $email_service->getOutboxCount($this->getUser()->getId(), $filter),
             'count_deleted' => $email_service->getDeletedCount($this->getUser()->getId()),
             'count_unread' => $email_service->getInboxUnreadCount($this->getUser()->getId()),
             'items' => $mail_list
@@ -226,6 +243,12 @@ class Mail extends AbstractApiController {
      *         in="query",
      *         required=false,
      *         @OA\Schema(type="int")
+     *     ),
+     *     @OA\Parameter(
+     *         name="filter",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="string")
      *     ),
      *     @OA\Response(
      *         response=200,
@@ -273,6 +296,7 @@ class Mail extends AbstractApiController {
     {
         $page = (int) ($this->params['page'] ?? 1);
         $count = (int) ($this->params['count'] ?? 10);
+        $filter = $this->params['filter'] ?? null;
 
         /** @var EmailService $email_service */
         $email_service = $this->container->get(EmailService::class);
@@ -288,10 +312,11 @@ class Mail extends AbstractApiController {
         $mail_list = array_map(function($m) {
             return MailItem::createFromArray($m);
         }, $email_list_array);
+
         return MailList::createFromArray([
             'count_inbox' => $email_service->getInboxCount($this->getUser()->getId()) ,
-            'count_outbox' => $email_service->getOutboxCount($this->getUser()->getId()) ,
-            'count_deleted' => $email_service->getDeletedCount($this->getUser()->getId()),
+            'count_outbox' => $email_service->getOutboxCount($this->getUser()->getId()),
+            'count_deleted' => $email_service->getDeletedCount($this->getUser()->getId(), $filter),
             'count_unread' => $email_service->getInboxUnreadCount($this->getUser()->getId()),
             'items' => $mail_list
         ]);
@@ -541,9 +566,7 @@ class Mail extends AbstractApiController {
             return new ClientErrorResponse('email_id', 'Email not found');
         }
 
-        $email = $email_service->getEmailById($email_id);
-        $email['is_important'] = $is_important;
-        $email_service->saveEmail($email);
+        $email_service->saveEmail(['id' => $email_id, 'is_important' => $is_important]);
 
         return new EmptyResponse();
     }

@@ -50,71 +50,89 @@ class EmailService {
         return null;
     }
 
-    public function getInbox(int $user_id, int $page = 1, int $count = 10, $only_important = false)
+    public function getInbox(int $user_id, int $page = 1, int $count = 10, $only_important = false, string $filter = null)
     {
+        $sql = "SELECT e.*, u.email as sender, r.email as recipient FROM `app_emails` e ".
+            "JOIN app_users u ON e.sender_user_id = u.id ".
+            "JOIN app_users r ON e.recipient_user_id = r.id ".
+            "WHERE e.recipient_user_id = :user_id AND e.delete_date IS NULL AND e.type = :received ";
+
+        $params = [
+            ':user_id' => $user_id,
+            ':received' => EmailType::RECEIVED,
+            ':offset' => (--$page) * $count,
+            ':limit' => $count
+        ];
+
         if ($only_important) {
-            return $this->dp->getArrays(
-                "SELECT e.*, u.email as sender, r.email as recipient  FROM `app_emails` e ".
-                "JOIN app_users u ON e.sender_user_id = u.id ".
-                "JOIN app_users r ON e.recipient_user_id = r.id ".
-                "WHERE e.recipient_user_id = :user_id AND e.delete_date IS NULL AND e.type = :received ".
-                "AND is_important = :is_important ".
-                "LIMIT :offset :limit",
-                [
-                    ':user_id' => $user_id,
-                    ':offset' => (--$page) * $count,
-                    ':limit' => $count,
-                    ':received' => EmailType::RECEIVED,
-                    ':is_important' => 1
-                ]
-            );
+            $sql .= "AND is_important = :is_important ";
+            $params[':is_important'] = 1;
         }
-        return $this->dp->getArrays(
-            "SELECT e.*, u.email as sender, r.email as recipient FROM `app_emails` e ".
-            "JOIN app_users u ON e.sender_user_id = u.id ".
-            "JOIN app_users r ON e.recipient_user_id = r.id ".
-            "WHERE e.recipient_user_id = :user_id AND e.delete_date IS NULL AND e.type = :received ".
-            "LIMIT :offset, :limit",
-            [
-                ':user_id' => $user_id,
-                ':offset' => (--$page) * $count,
-                ':limit' => $count,
-                ':received' => EmailType::RECEIVED
-            ]
-        );
+
+        if ($filter) {
+            $sql .= "AND (lower(u.email) LIKE lower(:filter) ".
+                "OR lower(r.email) LIKE lower(:filter) ".
+                "OR lower(e.subject) LIKE lower(:filter) ".
+                "OR lower(e.message) LIKE lower(:filter)) ";
+            $params[':filter'] = '%'.$filter.'%';
+        }
+
+        $sql .= "LIMIT :offset, :limit";
+
+        return $this->dp->getArrays($sql, $params);
     }
 
-    public function getOutbox(int $user_id, int $page = 1, int $count = 10)
+    public function getOutbox(int $user_id, int $page = 1, int $count = 10, string $filter = null)
     {
-        return $this->dp->getArrays(
-            "SELECT e.*, u.email as sender, r.email as recipient FROM `app_emails` e ".
+        $sql = "SELECT e.*, u.email as sender, r.email as recipient FROM `app_emails` e ".
             "JOIN app_users u ON e.sender_user_id = u.id ".
             "JOIN app_users r ON e.recipient_user_id = r.id ".
-            "WHERE e.sender_user_id = :user_id AND e.delete_date IS NULL AND e.type = :received ".
-            "LIMIT :offset, :limit",
-            [
-                ':user_id' => $user_id,
-                ':offset' => (--$page) * $count,
-                ':limit' => $count,
-                ':received' => EmailType::SENT
-            ]
-        );
+            "WHERE e.sender_user_id = :user_id AND e.delete_date IS NULL AND e.type = :received ";
+
+        $params = [
+            ':user_id' => $user_id,
+            ':offset' => (--$page) * $count,
+            ':limit' => $count,
+            ':received' => EmailType::SENT
+        ];
+
+        if ($filter) {
+            $sql .= "AND (lower(u.email) LIKE lower(:filter) ".
+                "OR lower(r.email) LIKE lower(:filter) ".
+                "OR lower(e.subject) LIKE lower(:filter) ".
+                "OR lower(e.message) LIKE lower(:filter)) ";
+            $params[':filter'] = '%'.$filter.'%';
+        }
+
+        $sql .= "LIMIT :offset, :limit";
+
+        return $this->dp->getArrays($sql, $params);
     }
 
-    public function getDeleted(int $user_id, int $page = 1, int $count = 10)
+    public function getDeleted(int $user_id, int $page = 1, int $count = 10, $filter = null)
     {
-        return $this->dp->getArrays(
-            "SELECT e.*, u.email as sender, r.email as recipient FROM `app_emails` e ".
+        $sql = "SELECT e.*, u.email as sender, r.email as recipient FROM `app_emails` e ".
             "JOIN app_users u ON e.sender_user_id = u.id ".
             "JOIN app_users r ON e.recipient_user_id = r.id ".
-            "WHERE (e.recipient_user_id = :user_id OR e.sender_user_id = :user_id) AND e.delete_date IS NOT NULL ".
-            "LIMIT :offset, :limit",
-            [
-                ':user_id' => $user_id,
-                ':offset' => (--$page) * $count,
-                ':limit' => $count,
-            ]
-        );
+            "WHERE (e.recipient_user_id = :user_id OR e.sender_user_id = :user_id) AND e.delete_date IS NOT NULL ";
+
+        $params = [
+            ':user_id' => $user_id,
+            ':offset' => (--$page) * $count,
+            ':limit' => $count,
+        ];
+
+        if ($filter) {
+            $sql .= "AND (lower(u.email) LIKE lower(:filter) ".
+                "OR lower(r.email) LIKE lower(:filter) ".
+                "OR lower(e.subject) LIKE lower(:filter) ".
+                "OR lower(e.message) LIKE lower(:filter)) ";
+            $params[':filter'] = '%'.$filter.'%';
+        }
+
+        $sql .= "LIMIT :offset, :limit";
+
+        return $this->dp->getArrays($sql, $params);
     }
 
     public function getEmailById(int $email_id)
@@ -150,7 +168,7 @@ class EmailService {
 
         $this->dp->query(
             "UPDATE `app_emails` ".
-            "SET ".implode($params)." ".
+            "SET ".implode(",", $params)." ".
             "WHERE id = :id",
             [
                 ':id' => $id
@@ -175,16 +193,27 @@ class EmailService {
         );
     }
 
-    public function getInboxCount(int $user_id)
+    public function getInboxCount(int $user_id, string $filter = null)
     {
-        return (int) $this->dp->getValue(
-            "SELECT count(*) FROM `app_emails` e ".
-            "WHERE e.recipient_user_id = :user_id AND e.delete_date IS NULL AND type = :received",
-            [
-                ':user_id' => $user_id,
-                ':received' => EmailType::RECEIVED
-            ]
-        ) ?? 0;
+        $sql = "SELECT count(*) FROM `app_emails` e ".
+            "JOIN app_users u ON e.sender_user_id = u.id ".
+            "JOIN app_users r ON e.recipient_user_id = r.id ".
+            "WHERE e.recipient_user_id = :user_id AND e.delete_date IS NULL AND type = :received ";
+
+        $params = [
+            ':user_id' => $user_id,
+            ':received' => EmailType::RECEIVED
+        ];
+
+        if ($filter) {
+            $sql .= "AND (lower(u.email) LIKE lower(:filter) ".
+                "OR lower(r.email) LIKE lower(:filter) ".
+                "OR lower(e.subject) LIKE lower(:filter) ".
+                "OR lower(e.message) LIKE lower(:filter)) ";
+            $params[':filter'] = '%'.$filter.'%';
+        }
+
+        return (int) $this->dp->getValue($sql, $params) ?? 0;
     }
 
     public function getInboxUnreadCount(int $user_id)
@@ -199,27 +228,49 @@ class EmailService {
         ) ?? 0;
     }
 
-    public function getOutboxCount(int $user_id)
+    public function getOutboxCount(int $user_id, string $filter = null)
     {
-        return (int) $this->dp->getValue(
-            "SELECT count(*) FROM `app_emails` e ".
-            "WHERE e.sender_user_id = :user_id AND e.delete_date IS NULL AND type = :sent",
-            [
-                ':user_id' => $user_id,
-                ':sent' => EmailType::SENT
-            ]
-        ) ?? 0;
+        $sql = "SELECT count(*) FROM `app_emails` e ".
+            "JOIN app_users u ON e.sender_user_id = u.id ".
+            "JOIN app_users r ON e.recipient_user_id = r.id ".
+            "WHERE e.sender_user_id = :user_id AND e.delete_date IS NULL AND type = :sent ";
+
+        $params = [
+            ':user_id' => $user_id,
+            ':sent' => EmailType::SENT
+        ];
+
+        if ($filter) {
+            $sql .= "AND (lower(u.email) LIKE lower(:filter) ".
+                "OR lower(r.email) LIKE lower(:filter) ".
+                "OR lower(e.subject) LIKE lower(:filter) ".
+                "OR lower(e.message) LIKE lower(:filter)) ";
+            $params[':filter'] = '%'.$filter.'%';
+        }
+
+        return (int) $this->dp->getValue($sql, $params) ?? 0;
     }
 
-    public function getDeletedCount(int $user_id)
+    public function getDeletedCount(int $user_id, string $filter = null)
     {
-        return (int) $this->dp->getValue(
-            "SELECT count(*) FROM `app_emails` e ".
-            "WHERE (e.recipient_user_id = :user_id OR e.sender_user_id = :user_id) AND e.delete_date IS NOT NULL",
-            [
-                ':user_id' => $user_id,
-            ]
-        ) ?? 0;
+        $sql = "SELECT count(*) FROM `app_emails` e ".
+            "JOIN app_users u ON e.sender_user_id = u.id ".
+            "JOIN app_users r ON e.recipient_user_id = r.id ".
+            "WHERE (e.recipient_user_id = :user_id OR e.sender_user_id = :user_id) AND e.delete_date IS NOT NULL ";
+
+        $params = [
+            ':user_id' => $user_id
+        ];
+
+        if ($filter) {
+            $sql .= "AND (lower(u.email) LIKE lower(:filter) ".
+                "OR lower(r.email) LIKE lower(:filter) ".
+                "OR lower(e.subject) LIKE lower(:filter) ".
+                "OR lower(e.message) LIKE lower(:filter)) ";
+            $params[':filter'] = '%'.$filter.'%';
+        }
+
+        return (int) $this->dp->getValue($sql, $params) ?? 0;
     }
 
     public function deleteByIds(array $ids) {
